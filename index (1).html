@@ -10,7 +10,7 @@
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
         body { background: #f5f5f5; padding-bottom: 75px; }
-        .h { background: var(--p); color: white; padding: 15px; text-align: center; }
+        .h { background: var(--p); color: white; padding: 15px; text-align: center; position: relative; }
         .tabs { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #ddd; z-index: 100; }
         .tab { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: none; background: none; }
         .tab.active { background: #e8f5e9; color: var(--p); }
@@ -28,27 +28,25 @@
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
         
-        /* Toast notification styling */
         .toast {
             position: fixed;
-            top: 20px;
+            top: -60px;
             left: 50%;
-            transform: translateX(-50%) translateY(-100px);
+            transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
             color: white;
-            padding: 12px 24px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 30px;
             font-size: 0.9rem;
             font-weight: bold;
             z-index: 1000;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: top 0.3s ease, opacity 0.3s ease;
             opacity: 0;
             pointer-events: none;
-            white-space: nowrap;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .toast.show {
-            transform: translateX(-50%) translateY(0);
+            top: 20px;
             opacity: 1;
         }
     </style>
@@ -126,15 +124,6 @@
         };
 
         window.scs = {}; window.aId = 1; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
-        let toastTimeout;
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.classList.add('show');
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => t.classList.remove('show'), 1500);
-        }
 
         function init() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -172,23 +161,26 @@
             document.getElementById('sd').innerText = window.gross;
         }
 
+        function triggerToast(message) {
+            const toastEl = document.getElementById('toast');
+            if (toastEl) {
+                toastEl.innerText = message;
+                toastEl.classList.add('show');
+                setTimeout(() => { toastEl.classList.remove('show'); }, 1500);
+            }
+        }
+
         window.sel = function(id) { window.aId = id; rGrid(); ldScore(); };
         window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };
-        
         window.adj = function(v) {
             window.gross = Math.max(1, window.gross + v);
             document.getElementById('sd').innerText = window.gross;
-            let ap = pls.find(p => p.id === window.aId);
-            let pName = ap ? ap.name : 'Score';
+            let activePl = pls.find(p => p.id === window.aId);
+            let name = activePl ? activePl.name : "Player";
             
             db.ref('rooms/' + window.roomId + '/scores/' + `${window.aId}-${window.hNum}`)
               .set(window.gross)
-              .then(() => {
-                  showToast(`Saved ${pName}'s score!`);
-              })
-              .catch((err) => {
-                  showToast('Error saving to cloud');
-              });
+              .then(() => { triggerToast(`Saved ${name}'s score!`); });
         };
 
         window.sw = function(tab) {
