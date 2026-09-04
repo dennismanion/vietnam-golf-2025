@@ -27,32 +27,18 @@
         .row { display: flex; background: white; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; }
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
-        .toast {
-            position: fixed;
-            top: -60px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            z-index: 1000;
-            transition: top 0.3s ease, opacity 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+        .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
     </style>
 </head>
 <body>
     <div id="toast" class="toast">Saved!</div>
+
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
     </div>
+    
     <div id="s-in" class="sc active">
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
@@ -74,6 +60,7 @@
             <button class="sbtn" onclick="window.shareRoom()">🔗 Share Game Invite Link</button>
         </div>
     </div>
+
     <div id="s-bd" class="sc">
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
@@ -82,10 +69,12 @@
         </div>
         <div id="lbl"></div>
     </div>
+
     <div class="tabs">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ Scores</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
     </div>
+
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
@@ -120,34 +109,40 @@
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
-            document.getElementById('roomDisplay').innerText = `Room: ${window.roomId}`;
+            document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
-            db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
-                window.scs = snap.val() || {};
-                ldScore(); rBoard();
-            });
-            rGrid(); upHole();
+            rGrid(); 
+            upHole();
+            rBoard();
+
+            try {
+                db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
+                    window.scs = snap.val() || {};
+                    ldScore(); 
+                    rBoard();
+                }, (error) => {
+                    console.log("Firebase connection error handled quietly:", error);
+                });
+            } catch(e) {
+                console.log("Firebase block prevented:", e);
+            }
         }
 
         function rGrid(){
-            document.getElementById('pg').innerHTML = pls.map(p => `
-                <button class="pbtn ${p.id === window.aId ? 'active' : ''}" onclick="window.sel(${p.id})">
-                    <strong>${p.name}</strong><br>Hcp:${p.handicap}
-                </button>
-            `).join('');
+            document.getElementById('pg').innerHTML = pls.map(p => '<button class="pbtn ' + (p.id === window.aId ? 'active' : '') + '" onclick="window.sel(' + p.id + ')"><strong>' + p.name + '</strong><br>Hcp:' + p.handicap + '</button>').join('');
             let ap = pls.find(p => p.id === window.aId);
             if(ap) document.getElementById('pNameDisplay').innerText = ap.name;
         }
 
         function upHole(){
             let c = hls[window.hNum];
-            document.getElementById('hd').innerText = `Hole ${window.hNum}`;
-            document.getElementById('hdt').innerText = `Par ${c.par} | SI ${c.si}`;
+            document.getElementById('hd').innerText = "Hole " + window.hNum;
+            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
             ldScore();
         }
 
         function ldScore(){
-            let key = `${window.aId}-${window.hNum}`;
+            let key = window.aId + "-" + window.hNum;
             window.gross = window.scs[key] || hls[window.hNum].par;
             document.getElementById('sd').innerText = window.gross;
         }
@@ -169,19 +164,23 @@
             let activePl = pls.find(p => p.id === window.aId);
             let name = activePl ? activePl.name : "Player";
             
-            db.ref('rooms/' + window.roomId + '/scores/' + `${window.aId}-${window.hNum}`)
-              .set(window.gross)
-              .then(() => { triggerToast(`Saved ${name}'s score!`); });
+            triggerToast("Saved " + name + " - Hole " + window.hNum + " Score: " + window.gross);
+
+            try {
+                db.ref('rooms/' + window.roomId + '/scores/' + window.aId + '-' + window.hNum).set(window.gross);
+            } catch(e) {
+                console.log("Offline or blocked, score kept locally:", e);
+            }
         };
 
         window.sw = function(tab) {
             document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(`s-${tab}`).classList.add('active');
-            document.getElementById(`t-${tab}`).classList.add('active');
+            document.getElementById('s-' + tab).classList.add('active');
+            document.getElementById('t-' + tab).classList.add('active');
         };
 
         window.shareRoom = function() {
-            const url = `${window.location.origin}${window.location.pathname}?room=${window.roomId}`;
+            const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;
             if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
             else { navigator.clipboard.writeText(url); alert('Link copied!'); }
         };
@@ -190,9 +189,9 @@
             let lb = pls.map(p => {
                 let thru = 0, netDiff = 0, pts = 0;
                 for (let h = 1; h <= 18; h++) {
-                    if (window.scs[`${p.id}-${h}`]) {
+                    if (window.scs[p.id + '-' + h]) {
                         thru++;
-                        let g = window.scs[`${p.id}-${h}`], par = hls[h].par, si = hls[h].si;
+                        let g = window.scs[p.id + '-' + h], par = hls[h].par, si = hls[h].si;
                         let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);
                         let net = g - strokes;
                         netDiff += (net - par);
@@ -205,15 +204,8 @@
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
 
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
-                let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? `+${p.netDiff}` : p.netDiff);
-                return `
-                    <div class="row">
-                        <div style="width:10%; font-weight:bold;">${idx + 1}</div>
-                        <div style="width:40%; font-weight:bold;">${p.name}</div>
-                        <div style="width:15%; text-align:center; color:#666;">${p.thru}</div>
-                        <div style="width:20%; text-align:center; font-weight:bold;">${p.thru === 0 ? '-' : nt}</div>
-                        <div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">${p.points}</div>
-                    </div>`;
+                let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
+                return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
         window.onload = init;
