@@ -1,12 +1,11 @@
-# Recompile the absolute final, verified HTML file layout using the true US Region Database routing configuration.
-html_final_fixed = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -79,14 +78,14 @@ html_final_fixed = """<!DOCTYPE html>
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            authDomain: "://firebaseapp.com",
+            authDomain: "vietnam-golf-2025.firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            // RE-CALIBRATED: Reverted to true default US server root domain rules
             databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
+        
         firebase.initializeApp(config);
         const db = firebase.database();
 
@@ -114,10 +113,12 @@ html_final_fixed = """<!DOCTYPE html>
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
+            // DRAW INTERFACE IMMEDIATELY. NO LOCKING REGARDLESS OF FIREBASE SPEED.
             rGrid(); 
             upHole();
             rBoard();
 
+            // CONNECT TO DATABASE IN THE BACKGROUND
             db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                 window.scs = snap.val() || {};
                 ldScore(); 
@@ -176,4 +177,36 @@ html_final_fixed = """<!DOCTYPE html>
         };
 
         window.shareRoom = function() {
-const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });else { navigator.clipboard.writeText(url); alert('Link copied!'); }};window.rBoard = function() {let lb = pls.map(p => {let thru = 0, netDiff = 0, pts = 0;for (let h = 1; h <= 18; h++) {let mapKey = p.id + '-' + h;if (window.scs[mapKey]) {thru++;let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);let net = g - strokes;netDiff += (net - par);let pMax = par - net + 2; if (pMax > 0) pts += pMax;}}return { name: p.name, thru: thru, netDiff: netDiff, points: pts };});lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);document.getElementById('lbl').innerHTML = lb.map((p, idx) => {let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);return '' + (idx + 1) + '' + p.name + '' + p.thru + '' + (p.thru === 0 ? '-' : nt) + '' + p.points + '';}).join('');};window.onload = init;"""with open("index.html", "w", encoding="utf-8") as f:f.write(html_final_fixed)print("US Database profile successfully compiled.")
+            const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;
+            if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
+            else { navigator.clipboard.writeText(url); alert('Link copied!'); }
+        };
+
+        window.rBoard = function() {
+            let lb = pls.map(p => {
+                let thru = 0, netDiff = 0, pts = 0;
+                for (let h = 1; h <= 18; h++) {
+                    let mapKey = p.id + '-' + h;
+                    if (window.scs[mapKey]) {
+                        thru++;
+                        let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;
+                        let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);
+                        let net = g - strokes;
+                        netDiff += (net - par);
+                        let pMax = par - net + 2; if (pMax > 0) pts += pMax;
+                    }
+                }
+                return { name: p.name, thru: thru, netDiff: netDiff, points: pts };
+            });
+
+            lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
+
+            document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
+                let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
+                return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
+            }).join('');
+        };
+        window.onload = init;
+    </script>
+</body>
+</html>
