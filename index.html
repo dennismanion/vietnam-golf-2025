@@ -1,11 +1,12 @@
-<!DOCTYPE html>
+# Create a fresh index.html with the correct Firebase and Realtime Database hooks
+html_final = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
     <style>
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -29,7 +30,6 @@
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
         .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
-        .db-status { font-size: 0.7rem; color: #ffeb3b; margin-top: 4px; display: block; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -38,7 +38,6 @@
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
-        <div id="dbStatus" class="db-status">Status: Connecting...</div>
     </div>
     
     <div id="s-in" class="sc active">
@@ -78,17 +77,15 @@
     </div>
 
     <script>
-        // Universal explicit configurations targeting regional endpoints explicitly
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            authDomain: "vietnam-golf-2025.firebaseapp.com",
+            authDomain: "://firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app/"
+            databaseURL: "https://firebasedatabase.app"
         };
-        
         firebase.initializeApp(config);
         const db = firebase.database();
 
@@ -113,41 +110,18 @@
         function init() {
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
-            if (roomParam) {
-                window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
-            }
+            if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
-            // Enforce safe layout setup immediately
             rGrid(); 
             upHole();
             rBoard();
 
-            // Establish real-time live data listener with status tracking indicator updates
-            try {
-                // Monitor server connection status directly
-                db.ref(".info/connected").on("value", (snap) => {
-                    if (snap.val() === true) {
-                        document.getElementById('dbStatus').innerText = "⚡ Live Cloud Connected";
-                        document.getElementById('dbStatus').style.color = "#4caf50";
-                    } else {
-                        document.getElementById('dbStatus').innerText = "⚠️ Server Connecting...";
-                        document.getElementById('dbStatus').style.color = "#ffeb3b";
-                    }
-                });
-
-                db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
-                    window.scs = snap.val() || {};
-                    ldScore(); 
-                    rBoard();
-                }, (err) => {
-                    document.getElementById('dbStatus').innerText = "❌ Firebase Blocked: " + err.message;
-                    document.getElementById('dbStatus').style.color = "#f44336";
-                });
-            } catch(e) {
-                document.getElementById('dbStatus').innerText = "❌ Initialization Crash: " + e.message;
-                document.getElementById('dbStatus').style.color = "#f44336";
-            }
+            db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
+                window.scs = snap.val() || {};
+                ldScore(); 
+                rBoard();
+            });
         }
 
         function rGrid(){
@@ -191,12 +165,7 @@
             rBoard();
 
             triggerToast("Saved " + name + " - Hole " + window.hNum + ": " + window.gross);
-
-            try {
-                db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
-            } catch(e) {
-                console.log("Local save active during offline state:", e);
-            }
+            db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
         };
 
         window.sw = function(tab) {
@@ -208,34 +177,4 @@
         window.shareRoom = function() {
             const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;
             if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
-            else { navigator.clipboard.writeText(url); alert('Link copied!'); }
-        };
-
-        window.rBoard = function() {
-            let lb = pls.map(p => {
-                let thru = 0, netDiff = 0, pts = 0;
-                for (let h = 1; h <= 18; h++) {
-                    let mapKey = p.id + '-' + h;
-                    if (window.scs[mapKey]) {
-                        thru++;
-                        let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;
-                        let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);
-                        let net = g - strokes;
-                        netDiff += (net - par);
-                        let pMax = par - net + 2; if (pMax > 0) pts += pMax;
-                    }
-                }
-                return { name: p.name, thru: thru, netDiff: netDiff, points: pts };
-            });
-
-            lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
-
-            document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
-                let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
-                return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
-            }).join('');
-        };
-        window.onload = init;
-    </script>
-</body>
-</html>
+else { navigator.clipboard.writeText(url); alert('Link copied!'); }};window.rBoard = function() {let lb = pls.map(p => {let thru = 0, netDiff = 0, pts = 0;for (let h = 1; h <= 18; h++) {let mapKey = p.id + '-' + h;if (window.scs[mapKey]) {thru++;let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);let net = g - strokes;netDiff += (net - par);let pMax = par - net + 2; if (pMax > 0) pts += pMax;}}return { name: p.name, thru: thru, netDiff: netDiff, points: pts };});lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);document.getElementById('lbl').innerHTML = lb.map((p, idx) => {let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);return '' + (idx + 1) + '' + p.name + '' + p.thru + '' + (p.thru === 0 ? '-' : nt) + '' + p.points + '';}).join('');};window.onload = init;"""with open("index.html", "w", encoding="utf-8") as f:f.write(html_final)print("File successfully generated.")
