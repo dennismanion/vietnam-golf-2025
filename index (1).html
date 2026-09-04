@@ -27,7 +27,6 @@
         .row { display: flex; background: white; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; }
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
-        
         .toast {
             position: fixed;
             top: -60px;
@@ -45,20 +44,15 @@
             pointer-events: none;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .toast.show {
-            top: 20px;
-            opacity: 1;
-        }
+        .toast.show { top: 20px; opacity: 1; }
     </style>
 </head>
 <body>
     <div id="toast" class="toast">Saved!</div>
-
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
     </div>
-    
     <div id="s-in" class="sc active">
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
@@ -80,7 +74,6 @@
             <button class="sbtn" onclick="window.shareRoom()">🔗 Share Game Invite Link</button>
         </div>
     </div>
-
     <div id="s-bd" class="sc">
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
@@ -89,12 +82,10 @@
         </div>
         <div id="lbl"></div>
     </div>
-
     <div class="tabs">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ Scores</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
     </div>
-
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
