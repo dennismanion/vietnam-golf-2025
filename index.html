@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
     <style>
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -78,12 +78,13 @@
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            authDomain: "vietnam-golf-2025.firebaseapp.com",
+            authDomain: "://firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            databaseURL: "https://vietnam-golf-2025-default-rtdb.firebaseio.com"
+            // FIXED: Standardized to explicit secondary server routing rules
+            databaseURL: "https://firebasedatabase.app"
         };
         firebase.initializeApp(config);
         const db = firebase.database();
@@ -109,9 +110,7 @@
         function init() {
             const urlParams = new URLSearchParams(window.location.search);
             const roomParam = urlParams.get('room');
-            if (roomParam) {
-                window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
-            }
+            if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
             rGrid(); 
@@ -125,7 +124,7 @@
                     rBoard();
                 });
             } catch(e) {
-                console.log("Database fallback:", e);
+                console.log("Database offline tracker log: ", e);
             }
         }
 
@@ -174,47 +173,11 @@
             try {
                 db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
             } catch(e) {
-                console.log("Local save:", e);
+                console.log("State backup handling fallback:", e);
             }
         };
 
         window.sw = function(tab) {
             document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
             document.getElementById('s-' + tab).classList.add('active');
-            document.getElementById('t-' + tab).classList.add('active');
-        };
-
-        window.shareRoom = function() {
-            const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;
-            if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
-            else { navigator.clipboard.writeText(url); alert('Link copied!'); }
-        };
-
-        window.rBoard = function() {
-            let lb = pls.map(p => {
-                let thru = 0, netDiff = 0, pts = 0;
-                for (let h = 1; h <= 18; h++) {
-                    let mapKey = p.id + '-' + h;
-                    if (window.scs[mapKey]) {
-                        thru++;
-                        let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;
-                        let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);
-                        let net = g - strokes;
-                        netDiff += (net - par);
-                        let pMax = par - net + 2; if (pMax > 0) pts += pMax;
-                    }
-                }
-                return { name: p.name, thru: thru, netDiff: netDiff, points: pts };
-            });
-
-            lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
-
-            document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
-                let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
-                return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
-            }).join('');
-        };
-        window.onload = init;
-    </script>
-</body>
-</html>
+document.getElementById('t-' + tab).classList.add('active');};window.shareRoom = function() {const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });else { navigator.clipboard.writeText(url); alert('Link copied!'); }};window.rBoard = function() {let lb = pls.map(p => {let thru = 0, netDiff = 0, pts = 0;for (let h = 1; h <= 18; h++) {let mapKey = p.id + '-' + h;if (window.scs[mapKey]) {thru++;let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);let net = g - strokes;netDiff += (net - par);let pMax = par - net + 2; if (pMax > 0) pts += pMax;}}return { name: p.name, thru: thru, netDiff: netDiff, points: pts };});lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);document.getElementById('lbl').innerHTML = lb.map((p, idx) => {let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);return '' + (idx + 1) + '' + p.name + '' + p.thru + '' + (p.thru === 0 ? '-' : nt) + '' + p.points + '';}).join('');};window.onload = init;
