@@ -30,7 +30,7 @@
         
         .login-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 10px; text-align: center; }
         .login-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-        .login-btn { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px 10px; border-radius: 8px; font-size: 1rem; font-weight: bold; color: var(--p); text-align: center; border: 1px solid #c8e6c9; }
+        .login-btn { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px 10px; border-radius: 8px; font-size: 1rem; font-weight: bold; color: var(--p); text-align: center; }
         .login-btn:active { background: var(--a); color: white; }
     </style>
 </head>
@@ -123,16 +123,23 @@
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
+            // 1. Build list layout immediately
             rLoginGrid();
-            upHole();
             rBoard();
+            
+            // 2. Set label headers safely without querying individual cards yet
+            let c = hls[window.hNum];
+            document.getElementById('hd').innerText = "Hole " + window.hNum;
+            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
 
+            // 3. Connect database listeners safely
             db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                 window.scs = snap.val() || {};
                 if (window.aId) ldScore(); 
                 rBoard();
             });
 
+            // 4. Session memory mapping check
             const savedProfileId = localStorage.getItem('golf_logged_id_' + window.roomId);
             if (savedProfileId) {
                 window.loginAs(parseInt(savedProfileId));
@@ -165,12 +172,4 @@
             
             document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
             document.getElementById('s-login').classList.add('active');
-            document.getElementById('t-in').classList.add('active');
-            document.getElementById('navTabs').style.display = 'none';
-        };
-
-        function upHole(){
-            let c = hls[window.hNum];
-            document.getElementById('hd').innerText = "Hole " + window.hNum;
-            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
-if (window.aId) ldScore();}function ldScore(){if (!window.aId) return;let key = window.aId + "-" + window.hNum;window.gross = window.scs[key] || hls[window.hNum].par;document.getElementById('sd').innerText = window.gross;}function triggerToast(message) {const toastEl = document.getElementById('toast');if (toastEl) {toastEl.innerText = message;toastEl.classList.add('show');setTimeout(() => { toastEl.classList.remove('show'); }, 1500);}}window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };window.adj = function(v) {if (!window.aId) return;window.gross = Math.max(1, window.gross + v);document.getElementById('sd').innerText = window.gross;let activePl = pls.find(p => p.id === window.aId);let name = activePl ? activePl.name : "Player";let targetKey = window.aId + '-' + window.hNum;window.scs[targetKey] = window.gross;rBoard();triggerToast("Saved " + name + " - Hole " + window.hNum + ": " + window.gross);db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);};window.sw = function(tab) {document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));document.getElementById('s-' + tab).classList.add('active');document.getElementById('t-' + tab).classList.add('active');};window.shareRoom = function() {const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });else { navigator.clipboard.writeText(url); alert('Link copied!'); }};window.rBoard = function() {let lb = pls.map(p => {let thru = 0, netDiff = 0, pts = 0;for (let h = 1; h <= 18; h++) {let mapKey = p.id + '-' + h;if (window.scs[mapKey]) {thru++;let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);let net = g - strokes;netDiff += (net - par);let pMax = par - net + 2; if (pMax > 0) pts += pMax;}}return { name: p.name, thru: thru, netDiff: netDiff, points: pts };});lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);document.getElementById('lbl').innerHTML = lb.map((p, idx) => {let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);return '' + (idx + 1) + '' + p.name + '' + p.thru + '' + (p.thru === 0 ? '-' : nt) + '' + p.points + '';}).join('');};window.onload = init;
+document.getElementById('t-in').classList.add('active');document.getElementById('navTabs').style.display = 'none';};function upHole(){let c = hls[window.hNum];document.getElementById('hd').innerText = "Hole " + window.hNum;document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;if (window.aId) ldScore();}function ldScore(){if (!window.aId) return;let key = window.aId + "-" + window.hNum;window.gross = window.scs[key] || hls[window.hNum].par;document.getElementById('sd').innerText = window.gross;}function triggerToast(message) {const toastEl = document.getElementById('toast');if (toastEl) {toastEl.innerText = message;toastEl.classList.add('show');setTimeout(() => { toastEl.classList.remove('show'); }, 1500);}}window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };window.adj = function(v) {if (!window.aId) return;window.gross = Math.max(1, window.gross + v);document.getElementById('sd').innerText = window.gross;let activePl = pls.find(p => p.id === window.aId);let name = activePl ? activePl.name : "Player";let targetKey = window.aId + '-' + window.hNum;window.scs[targetKey] = window.gross;rBoard();triggerToast("Saved " + name + " - Hole " + window.hNum + ": " + window.gross);db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);};window.sw = function(tab) {document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));document.getElementById('s-' + tab).classList.add('active');document.getElementById('t-' + tab).classList.add('active');};window.shareRoom = function() {const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });else { navigator.clipboard.writeText(url); alert('Link copied!'); }};window.rBoard = function() {let lb = pls.map(p => {let thru = 0, netDiff = 0, pts = 0;for (let h = 1; h <= 18; h++) {let mapKey = p.id + '-' + h;if (window.scs[mapKey]) {thru++;let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;let strokes = Math.floor(p.handicap / 18) + (p.handicap % 18 >= si ? 1 : 0);let net = g - strokes;netDiff += (net - par);let pMax = par - net + 2; if (pMax > 0) pts += pMax;}}return { name: p.name, thru: thru, netDiff: netDiff, points: pts };});lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);document.getElementById('lbl').innerHTML = lb.map((p, idx) => {let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);return '' + (idx + 1) + '' + p.name + '' + p.thru + '' + (p.thru === 0 ? '-' : nt) + '' + p.points + '';}).join('');};window.onload = init;
