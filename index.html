@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -18,45 +18,39 @@
         .sc.active { display: block; }
         .hnav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .hnav button { background: var(--a); color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 1.2rem; }
+        .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
+        .pbtn { background: white; border: 1px solid #ddd; padding: 8px 4px; text-align: center; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: #333; }
+        .pbtn.active { background: var(--a); color: white; border-color: var(--p); }
         .cbox { background: white; border-radius: 12px; padding: 25px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .crow { display: flex; justify-content: center; align-items: center; gap: 25px; margin: 15px 0; }
         .cbtn { width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; font-size: 1.8rem; border: 1px solid #c8e6c9; color: var(--p); }
         .row { display: flex; background: white; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; }
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
-        .obtn { background: #666; color: white; width: 100%; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 25px; font-size: 0.9rem; }
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
         .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
-        .login-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-top: 10px; text-align: center; }
-        .login-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-        .login-btn { background: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px 10px; border-radius: 8px; font-size: 1rem; font-weight: bold; color: var(--p); text-align: center; border: 1px solid #c8e6c9; }
-        .login-btn:active { background: var(--a); color: white; }
     </style>
 </head>
 <body>
     <div id="toast" class="toast">Saved!</div>
+
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
     </div>
-    <div id="s-login" class="sc active">
-        <div class="login-box">
-            <h2 style="color: #333; font-size: 1.3rem;">Select Your Profile to Start</h2>
-            <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Your scoring sheet will track this selected profile.</p>
-            <div class="login-grid" id="loginGrid"></div>
-        </div>
-    </div>
-    <div id="s-in" class="sc">
+    
+    <div id="s-in" class="sc active">
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
             <div style="text-align:center">
                 <h2 id="hd">Hole 1</h2>
-                <div id="hdt" style="font-size: 0.8rem; color: #666; margin-top: 2px;">Par 4 | SI 7</div>
+                <div id="hdt" style="font-size: 0.8rem; color: #666; margin-top: 2px;">Par 4 | SI 8</div>
             </div>
             <button onclick="window.chHole(1)">▶</button>
         </div>
+        <div class="pgrid" id="pg"></div>
         <div class="cbox">
-            <p id="pNameDisplay" style="color: #333; font-weight: bold; font-size: 1.4rem; margin-bottom: 5px;">Player</p>
+            <p id="pNameDisplay" style="color: #333; font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Player</p>
             <p style="color: #666; font-size: 1rem;">Gross Score</p>
             <div class="crow">
                 <button class="cbtn" onclick="window.adj(-1)">−</button>
@@ -64,9 +58,9 @@
                 <button class="cbtn" onclick="window.adj(1)">+</button>
             </div>
             <button class="sbtn" onclick="window.shareRoom()">🔗 Share Game Invite Link</button>
-            <button class="obtn" onclick="window.logout()">👤 Switch / Logout Player</button>
         </div>
     </div>
+
     <div id="s-bd" class="sc">
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
@@ -75,40 +69,43 @@
         </div>
         <div id="lbl"></div>
     </div>
-    <div class="tabs" id="navTabs" style="display: none;">
+
+    <div class="tabs">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ Scores</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
     </div>
+
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            authDomain: "://firebaseapp.com",
+            authDomain: "vietnam-golf-2025.firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app"
+            databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
+        
         firebase.initializeApp(config);
         const db = firebase.database();
 
-       const pls = [
+        const pls = [
             { id: 1, name: 'Ben', handicap: 20 }, { id: 2, name: 'Ian', handicap: 16 },
-            { id: 3, name: 'Peter', handicap: 23 }, { id: 4, name: 'Quinton', handicap: 11 },
-            { id: 5, name: 'Neal', handicap: 6 }, { id: 6, name: 'Dennis', handicap: 12 },
-            { id: 7, name: 'TK', handicap: 10 }, { id: 8, name: 'Brad', handicap: 32 }
+            { id: 3, name: 'Peter', handicap: 23 }, { id: 4, name: 'Neale', handicap: 28 },
+            { id: 5, name: 'Neal', handicap: 6 }, { id: 6, name: 'Dennis', handicap: 13 },
+            { id: 7, name: 'Tony', handicap: 30 }, { id: 8, name: 'Brad', handicap: 32 }
         ];
 
         const hls = {
-            1: { par: 4, si: 7 },  2: { par: 5, si: 13 }, 3: { par: 3, si: 15 },
-            4: { par: 4, si: 11 }, 5: { par: 4, si: 1 },  6: { par: 5, si: 9 },
-            7: { par: 4, si: 5 },  8: { par: 3, si: 17 }, 9: { par: 4, si: 3 },
-            10: { par: 4, si: 6 }, 11: { par: 3, si: 10 }, 12: { par: 4, si: 2 },
-            13: { par: 5, si: 8 },  14: { par: 3, si: 14 },  15: { par: 4, si: 4 },
-            16: { par: 4, si: 18 }, 17: { par: 4, si: 16 },  18: { par: 5, si: 12 }
+            1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
+            4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
+            7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
+            10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
+            13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
+            16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
         };
 
-        window.scs = {}; window.aId = null; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
+        window.scs = {}; window.aId = 1; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
 
         function init() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -116,57 +113,33 @@
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
-            rLoginGrid();
+            // DRAW INTERFACE IMMEDIATELY. NO LOCKING REGARDLESS OF FIREBASE SPEED.
+            rGrid(); 
+            upHole();
             rBoard();
 
+            // CONNECT TO DATABASE IN THE BACKGROUND
             db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                 window.scs = snap.val() || {};
-                if (window.aId) ldScore(); 
+                ldScore(); 
                 rBoard();
             });
-
-            const savedProfileId = localStorage.getItem('golf_logged_id_' + window.roomId);
-            if (savedProfileId) {
-                window.loginAs(parseInt(savedProfileId));
-            }
         }
 
-        function rLoginGrid() {
-            document.getElementById('loginGrid').innerHTML = pls.map(p => 
-                '<button class="login-btn" onclick="window.loginAs(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem;font-weight:normal;color:#666;">Hcp: ' + p.handicap + '</span></button>'
-            ).join('');
-        }
-
-        window.loginAs = function(id) {
-            window.aId = id;
-            localStorage.setItem('golf_logged_id_' + window.roomId, id);
+        function rGrid(){
+            document.getElementById('pg').innerHTML = pls.map(p => '<button class="pbtn ' + (p.id === window.aId ? 'active' : '') + '" onclick="window.sel(' + p.id + ')"><strong>' + p.name + '</strong><br>Hcp:' + p.handicap + '</button>').join('');
             let ap = pls.find(p => p.id === window.aId);
             if(ap) document.getElementById('pNameDisplay').innerText = ap.name;
-            document.getElementById('s-login').classList.remove('active');
-            document.getElementById('s-in').classList.add('active');
-            document.getElementById('navTabs').style.display = 'flex';
-            upHole();
-        };
-
-        window.logout = function() {
-            window.aId = null;
-            localStorage.removeItem('golf_logged_id_' + window.roomId);
-            document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('s-login').classList.add('active');
-            document.getElementById('navTabs').style.display = 'none';
-        };
+        }
 
         function upHole(){
-            let currentHoleObj = hls[window.hNum];
-            if (currentHoleObj) {
-                document.getElementById('hd').innerText = "Hole " + window.hNum;
-                document.getElementById('hdt').innerText = "Par " + currentHoleObj.par + " | SI " + currentHoleObj.si;
-                if (window.aId) ldScore();
-            }
+            let c = hls[window.hNum];
+            document.getElementById('hd').innerText = "Hole " + window.hNum;
+            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
+            ldScore();
         }
 
         function ldScore(){
-            if (!window.aId) return;
             let key = window.aId + "-" + window.hNum;
             window.gross = window.scs[key] || hls[window.hNum].par;
             document.getElementById('sd').innerText = window.gross;
@@ -181,20 +154,18 @@
             }
         }
 
-        window.chHole = function(d) { 
-            window.hNum = Math.max(1, Math.min(18, window.hNum + d)); 
-            upHole(); 
-        };
-        
+        window.sel = function(id) { window.aId = id; rGrid(); ldScore(); };
+        window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };
         window.adj = function(v) {
-            if (!window.aId) return;
             window.gross = Math.max(1, window.gross + v);
             document.getElementById('sd').innerText = window.gross;
             let activePl = pls.find(p => p.id === window.aId);
             let name = activePl ? activePl.name : "Player";
+            
             let targetKey = window.aId + '-' + window.hNum;
             window.scs[targetKey] = window.gross;
             rBoard();
+
             triggerToast("Saved " + name + " - Hole " + window.hNum + ": " + window.gross);
             db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
         };
@@ -227,7 +198,9 @@
                 }
                 return { name: p.name, thru: thru, netDiff: netDiff, points: pts };
             });
+
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
+
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
                 return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
@@ -236,4 +209,4 @@
         window.onload = init;
     </script>
 </body>
-</html> 
+</html>
