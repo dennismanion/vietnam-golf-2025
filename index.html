@@ -27,7 +27,6 @@
         .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
         
-        /* New Setup Screen Styles */
         .welcome-box { background: white; border-radius: 12px; padding: 20px; margin-top: 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .sel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
         .sel-btn { background: white; border: 2px solid #ddd; padding: 15px 10px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #333; cursor: pointer; }
@@ -43,7 +42,6 @@
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
     </div>
     
-    <!-- NEW PLAYER SELECTION SCREEN -->
     <div id="s-setup" class="sc active">
         <div class="welcome-box">
             <h2>Select Your Name</h2>
@@ -52,7 +50,6 @@
         </div>
     </div>
     
-    <!-- SINGLE PLAYER SCORING SCREEN -->
     <div id="s-in" class="sc">
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
@@ -77,7 +74,6 @@
         </div>
     </div>
 
-    <!-- GLOBAL LEADERBOARD -->
     <div id="s-bd" class="sc">
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
@@ -90,6 +86,7 @@
     <div class="tabs" id="bottom-tabs" style="display:none;">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
+    </div>
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
@@ -101,8 +98,14 @@
             databaseURL: "https://firebasedatabase.app"
         };
         
-        firebase.initializeApp(config);
-        const db = firebase.database();
+        // Safety initialization block
+        let db = null;
+        try {
+            firebase.initializeApp(config);
+            db = firebase.database();
+        } catch(e) {
+            console.warn("Firebase failed to load, falling back to local storage play mode.");
+        }
 
         const pls = [
             { id: 1, name: 'Ben', handicap: 20 }, { id: 2, name: 'Ian', handicap: 16 },
@@ -123,25 +126,30 @@
         window.scs = {}; window.aId = null; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
 
         function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomParam = urlParams.get('room');
-            if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomParam = urlParams.get('room');
+                if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
+            } catch(e) {
+                console.log("URL parsing restricted. Fallback applied.");
+            }
+            
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
-            // FIX: Draw the setup buttons immediately so it doesn't get stuck in incognito mode
             renderSetupGrid();
             window.rBoard();
 
-            // Connect to database in the background, updating values silently as they arrive
-            db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
-                window.scs = snap.val() || {};
-                if (window.aId !== null) ldScore(); 
-                window.rBoard();
-            }, (error) => {
-                console.log("Firebase blocked or offline. Operating in local mode:", error);
-            });
+            // Background network synchronization hook
+            if (db) {
+                db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
+                    window.scs = snap.val() || {};
+                    if (window.aId !== null) ldScore(); 
+                    window.rBoard();
+                }, (err) => {
+                    console.log("Firebase sync blocked locally.");
+                });
+            }
         }
-
 
         function renderSetupGrid() {
             document.getElementById('setup-grid').innerHTML = pls.map(p => 
@@ -200,7 +208,9 @@
             window.rBoard();
 
             triggerToast("Score Saved!");
-            db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
+            if (db) {
+                db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
+            }
         };
 
         window.sw = function(tab) {
@@ -213,7 +223,7 @@
         };
 
         window.shareRoom = function() {
-            const url = window.location.origin + window.location.pathname + "?room=" + window.roomId;
+            let url = window.location.href;
             if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
             else { navigator.clipboard.writeText(url); alert('Link copied!'); }
         };
@@ -246,4 +256,3 @@
     </script>
 </body>
 </html>
-    </div>
