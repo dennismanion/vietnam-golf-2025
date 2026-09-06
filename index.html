@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
     <style>
         :root { --p: #1b5e20; --a: #2e7d32; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
@@ -18,9 +18,6 @@
         .sc.active { display: block; }
         .hnav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .hnav button { background: var(--a); color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 1.2rem; }
-        .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 20px; }
-        .pbtn { background: white; border: 1px solid #ddd; padding: 8px 4px; text-align: center; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: #333; }
-        .pbtn.active { background: var(--a); color: white; border-color: var(--p); }
         .cbox { background: white; border-radius: 12px; padding: 25px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .crow { display: flex; justify-content: center; align-items: center; gap: 25px; margin: 15px 0; }
         .cbtn { width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; font-size: 1.8rem; border: 1px solid #c8e6c9; color: var(--p); }
@@ -29,6 +26,13 @@
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
         .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
+        
+        /* New Setup Screen Styles */
+        .welcome-box { background: white; border-radius: 12px; padding: 20px; margin-top: 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .sel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
+        .sel-btn { background: white; border: 2px solid #ddd; padding: 15px 10px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #333; cursor: pointer; }
+        .sel-btn:active { background: #e8f5e9; border-color: var(--p); }
+        .sw-link { font-size: 0.85rem; color: #0288d1; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 5px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -39,7 +43,17 @@
         <div id="roomDisplay" class="room-tag">Room: Loading...</div>
     </div>
     
-    <div id="s-in" class="sc active">
+    <!-- NEW PLAYER SELECTION SCREEN -->
+    <div id="s-setup" class="sc active">
+        <div class="welcome-box">
+            <h2>Select Your Name</h2>
+            <p style="color: #666; margin-top: 5px;">Choose your profile to begin scoring your round.</p>
+            <div class="sel-grid" id="setup-grid"></div>
+        </div>
+    </div>
+    
+    <!-- SINGLE PLAYER SCORING SCREEN -->
+    <div id="s-in" class="sc">
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
             <div style="text-align:center">
@@ -48,19 +62,22 @@
             </div>
             <button onclick="window.chHole(1)">▶</button>
         </div>
-        <div class="pgrid" id="pg"></div>
+        
         <div class="cbox">
-            <p id="pNameDisplay" style="color: #333; font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">Player</p>
-            <p style="color: #666; font-size: 1rem;">Gross Score</p>
+            <h2 id="pNameDisplay" style="color: var(--p); font-size: 1.8rem; margin-bottom: 2px;">Player</h2>
+            <button class="sw-link" onclick="window.showSetup()">◀ Switch Profile</button>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 1.1rem; font-weight: 500;">Gross Score</p>
             <div class="crow">
                 <button class="cbtn" onclick="window.adj(-1)">−</button>
-                <div style="font-size:4rem;font-weight:bold;width:80px;" id="sd">-</div>
+                <div style="font-size:4.5rem;font-weight:bold;width:90px;" id="sd">-</div>
                 <button class="cbtn" onclick="window.adj(1)">+</button>
             </div>
             <button class="sbtn" onclick="window.shareRoom()">🔗 Share Game Invite Link</button>
         </div>
     </div>
 
+    <!-- GLOBAL LEADERBOARD -->
     <div id="s-bd" class="sc">
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
@@ -70,20 +87,18 @@
         <div id="lbl"></div>
     </div>
 
-    <div class="tabs">
-        <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ Scores</button>
+    <div class="tabs" id="bottom-tabs" style="display:none;">
+        <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
-    </div>
-
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            authDomain: "vietnam-golf-2025.firebaseapp.com",
+            authDomain: "://firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app/"
+            databaseURL: "https://firebasedatabase.app"
         };
         
         firebase.initializeApp(config);
@@ -105,7 +120,7 @@
             16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
         };
 
-        window.scs = {}; window.aId = 1; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
+        window.scs = {}; window.aId = null; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
 
         function init() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -113,22 +128,37 @@
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
-            rGrid(); 
-            upHole();
+            renderSetupGrid();
             window.rBoard();
 
             db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                 window.scs = snap.val() || {};
-                ldScore(); 
+                if (window.aId !== null) ldScore(); 
                 window.rBoard();
             });
         }
 
-        function rGrid(){
-            document.getElementById('pg').innerHTML = pls.map(p => '<button class="pbtn ' + (p.id === window.aId ? 'active' : '') + '" onclick="window.sel(' + p.id + ')"><strong>' + p.name + '</strong><br>Hcp:' + p.handicap + '</button>').join('');
-            let ap = pls.find(p => p.id === window.aId);
-            if(ap) document.getElementById('pNameDisplay').innerText = ap.name;
+        function renderSetupGrid() {
+            document.getElementById('setup-grid').innerHTML = pls.map(p => 
+                '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">Hcp: ' + p.handicap + '</span></button>'
+            ).join('');
         }
+
+        window.selectPlayer = function(id) {
+            window.aId = id;
+            let ap = pls.find(p => p.id === window.aId);
+            if(ap) document.getElementById('pNameDisplay').innerText = ap.name + " (Hcp: " + ap.handicap + ")";
+            
+            document.getElementById('bottom-tabs').style.display = 'flex';
+            window.sw('in');
+        };
+
+        window.showSetup = function() {
+            window.aId = null;
+            document.getElementById('bottom-tabs').style.display = 'none';
+            document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('s-setup').classList.add('active');
+        };
 
         function upHole(){
             let c = hls[window.hNum];
@@ -153,27 +183,27 @@
             }
         }
 
-        window.sel = function(id) { window.aId = id; rGrid(); ldScore(); };
         window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };
         
         window.adj = function(v) {
+            if (window.aId === null) return;
             window.gross = Math.max(1, window.gross + v);
             document.getElementById('sd').innerText = window.gross;
-            let activePl = pls.find(p => p.id === window.aId);
-            let name = activePl ? activePl.name : "Player";
             
             let targetKey = window.aId + '-' + window.hNum;
             window.scs[targetKey] = window.gross;
             window.rBoard();
 
-            triggerToast("Saved " + name + " - Hole " + window.hNum + ": " + window.gross);
+            triggerToast("Score Saved!");
             db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
         };
 
         window.sw = function(tab) {
+            if (window.aId === null && tab !== 'setup') return;
             document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
             document.getElementById('s-' + tab).classList.add('active');
             document.getElementById('t-' + tab).classList.add('active');
+            if(tab === 'in') upHole();
             if(tab === 'bd') window.rBoard();
         };
 
@@ -211,3 +241,4 @@
     </script>
 </body>
 </html>
+    </div>
