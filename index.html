@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
+    
+    <!-- FIX: Explicitly grant permissions for Firebase scripts and data streams to connect through GitHub -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * wss://*.firebaseio.com wss://*.firebasedatabase.app https://*.googleapis.com;">
+
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     <style>
@@ -19,7 +23,7 @@
         .hnav { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .hnav button { background: var(--a); color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 1.2rem; }
         .cbox { background: white; border-radius: 12px; padding: 25px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .crow { display: flex; justify-content: center; align-items: center; gap: 25px; margin: 15px 0; }
+        .crow { display: center; justify-content: center; align-items: center; gap: 25px; margin: 15px 0; display: flex; }
         .cbtn { width: 60px; height: 60px; background: #e8f5e9; border-radius: 50%; font-size: 1.8rem; border: 1px solid #c8e6c9; color: var(--p); }
         .row { display: flex; background: white; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; }
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
@@ -32,6 +36,9 @@
         .sel-btn { background: white; border: 2px solid #ddd; padding: 15px 10px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #333; cursor: pointer; }
         .sel-btn:active { background: #e8f5e9; border-color: var(--p); }
         .sw-link { font-size: 0.85rem; color: #0288d1; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 5px; display: inline-block; }
+        
+        /* Highlight rule for active scorer */
+        .my-row { background: #fff9c4 !important; border-left: 4px solid #fbc02d; }
     </style>
 </head>
 <body>
@@ -98,13 +105,12 @@
             databaseURL: "https://firebasedatabase.app"
         };
         
-        // Safety initialization block
         let db = null;
         try {
             firebase.initializeApp(config);
             db = firebase.database();
         } catch(e) {
-            console.warn("Firebase failed to load, falling back to local storage play mode.");
+            console.warn("Database initialization deferred.");
         }
 
         const pls = [
@@ -129,9 +135,14 @@
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const roomParam = urlParams.get('room');
-                if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
+                if (roomParam) {
+                    window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
+                } else {
+                    // FIX: Automatically match your GitHub repo folder structure if no parameter is provided
+                    window.roomId = window.location.pathname.replace(/\//g, '').replace('index.html', '') || 'vietnam2025';
+                }
             } catch(e) {
-                console.log("URL parsing restricted. Fallback applied.");
+                console.log("Routing parameter fallback applied.");
             }
             
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
@@ -139,14 +150,11 @@
             renderSetupGrid();
             window.rBoard();
 
-            // Background network synchronization hook
             if (db) {
                 db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                     window.scs = snap.val() || {};
                     if (window.aId !== null) ldScore(); 
                     window.rBoard();
-                }, (err) => {
-                    console.log("Firebase sync blocked locally.");
                 });
             }
         }
@@ -242,14 +250,18 @@
                         let pMax = par - net + 2; if (pMax > 0) pts += pMax;
                     }
                 }
-                return { name: p.name, thru: thru, netDiff: netDiff, points: pts };
+                
+                // Determine CSS style layout hooks for active player rows
+                let isMe = (p.id === window.aId);
+                return { id: p.id, name: p.name, thru: thru, netDiff: netDiff, points: pts, isMe: isMe };
             });
 
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
 
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
-                return '<div class="row"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
+                let rowClass = p.isMe ? 'row my-row' : 'row';
+                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
         window.onload = init;
