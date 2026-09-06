@@ -128,15 +128,20 @@
             if (roomParam) window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, ''); 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
+            // FIX: Draw the setup buttons immediately so it doesn't get stuck in incognito mode
             renderSetupGrid();
             window.rBoard();
 
+            // Connect to database in the background, updating values silently as they arrive
             db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                 window.scs = snap.val() || {};
                 if (window.aId !== null) ldScore(); 
                 window.rBoard();
+            }, (error) => {
+                console.log("Firebase blocked or offline. Operating in local mode:", error);
             });
         }
+
 
         function renderSetupGrid() {
             document.getElementById('setup-grid').innerHTML = pls.map(p => 
