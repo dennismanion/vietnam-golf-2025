@@ -173,10 +173,11 @@
 
         // ===== ROUNDS =====
         // Assigns which course each round is played on.
-        // NOTE: r2, r3 and r4 are all mapped to c3 (Course C) — switching between them
-        // won't trigger the "are you sure" prompt since it's technically the same card.
-        // If Pineapple Valley (r3) is actually a different layout to Black Mountain,
-        // give it its own entry in `courses` (e.g. c4) and point r3 at that instead.
+        // r2 and r4 (Black Mountain Day 1 & 2) share c3 (Course C) — same layout,
+        // but each round still has its own independent score sheet in `scs`.
+        // Switching rounds always prompts for confirmation (see chRound below),
+        // even between r2 and r4, so nobody accidentally enters Day 2 scores
+        // into Day 1's card or vice versa.
         const rounds = [
             { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1' },
             { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3' },
@@ -248,14 +249,14 @@
         window.chRound = function(id) {
             if (id === window.roundId) return;
 
-            let fromCourse = currentCourse();
             let toRound = rounds.find(r => r.id === id);
             let toCourse = courses[toRound.courseId];
 
-            if (toCourse !== fromCourse) {
-                let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?');
-                if (!ok) return;
-            }
+            // Always confirm on round switch — every round keeps its own score
+            // sheet, even rounds that share the same physical course (e.g. the
+            // two Black Mountain days both use Course C).
+            let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?\n\nThis is a separate score sheet from your current round.');
+            if (!ok) return;
 
             window.roundId = id;
             window.hNum = 1;
