@@ -55,7 +55,7 @@
 
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
-        <div id="roomDisplay" class="room-tag">Room: Loading...</div>
+        <div id="roomDisplay" class="room-tag" onclick="window.tapRoomTag()" style="user-select:none; cursor:pointer;">Room: Loading...</div>
     </div>
 
     <div id="s-setup" class="sc active">
@@ -335,6 +335,50 @@
             document.getElementById('t-' + tab).classList.add('active');
             if(tab === 'in') upHole();
             if(tab === 'bd') window.rBoard();
+        };
+
+        // Hidden admin reset: tap the room tag 5 times within 2s to trigger.
+        // Not visible anywhere in the UI on purpose — this wipes ALL scores
+        // for every player, in every round, for this room. Only meant to be
+        // used once testing is done and you want a clean sheet before the
+        // real trip starts.
+        window.resetTapCount = 0;
+        window.tapRoomTag = function() {
+            window.resetTapCount++;
+            clearTimeout(window.resetTapTimer);
+            window.resetTapTimer = setTimeout(() => { window.resetTapCount = 0; }, 2000);
+
+            if (window.resetTapCount >= 5) {
+                window.resetTapCount = 0;
+                clearTimeout(window.resetTapTimer);
+                window.confirmResetAll();
+            }
+        };
+
+        window.confirmResetAll = function() {
+            let sure = confirm(
+                '⚠️ RESET ALL SCORES?\n\n' +
+                'This will permanently delete EVERY score for EVERY player ' +
+                'in EVERY round for room "' + window.roomId + '".\n\n' +
+                'This cannot be undone. Only do this once testing is finished ' +
+                'and before the real trip begins.'
+            );
+            if (!sure) return;
+
+            let doubleSure = confirm(
+                'Are you absolutely sure? Type-check: this deletes ' +
+                'ALL data for room "' + window.roomId + '" right now.'
+            );
+            if (!doubleSure) return;
+
+            window.scs = {};
+            if (window.aId !== null) ldScore();
+            window.rBoard();
+            triggerToast("All scores reset!");
+
+            if (db) {
+                db.ref('rooms/' + window.roomId + '/scores').remove();
+            }
         };
 
         window.shareRoom = function() {
