@@ -127,7 +127,7 @@
 
     <div class="tabs" id="bottom-tabs" style="display:none;">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
-        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
+        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Leader Board</button>
     </div>
     <script>
         const config = {
@@ -356,7 +356,12 @@
             document.getElementById('s-' + tab).classList.add('active');
             document.getElementById('t-' + tab).classList.add('active');
             if(tab === 'in') upHole();
-            if(tab === 'bd') window.rBoard();
+            if(tab === 'bd') {
+                window.lbFilter = window.roundId || 'all';
+                renderLbFilters();
+                window.hideScorecard();
+                window.rBoard();
+            }
         };
 
         window.shareRoom = function() {
