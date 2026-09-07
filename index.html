@@ -46,7 +46,7 @@
 
         /* Round filter tabs (leaderboard screen) */
         .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
-        .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; }
+        .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
         .lb-chip.active { background: #0288d1; border-color: #0288d1; color: white; }
     </style>
 </head>
@@ -134,7 +134,6 @@
         ];
 
         // ===== COURSES =====
-        // EDIT THESE: replace par/si for each course with the real card for that course.
         // "si" = stroke index (1 = hardest hole, 18 = easiest) — used for handicap strokes.
         const courses = {
             c1: {
@@ -173,13 +172,16 @@
         };
 
         // ===== ROUNDS =====
-        // EDIT THIS: assign which course each round is played on.
-        // 4 rounds across 3 courses means one course gets repeated — change as needed.
+        // Assigns which course each round is played on.
+        // NOTE: r2, r3 and r4 are all mapped to c3 (Course C) — switching between them
+        // won't trigger the "are you sure" prompt since it's technically the same card.
+        // If Pineapple Valley (r3) is actually a different layout to Black Mountain,
+        // give it its own entry in `courses` (e.g. c4) and point r3 at that instead.
         const rounds = [
-            { id: 'r1', label: 'Springfield Country Club East Nth Course', courseId: 'c1' },
-            { id: 'r2', label: 'Black Mountain Day 1 East Nth Course', courseId: 'c3' },
+            { id: 'r1', label: 'Springfield CC East Nth', courseId: 'c1' },
+            { id: 'r2', label: 'Black Mountain Day 1', courseId: 'c3' },
             { id: 'r3', label: 'Pineapple Valley', courseId: 'c3' },
-            { id: 'r4', label: 'Black Mountain Day 2 East Nth Course', courseId: 'c3' }
+            { id: 'r4', label: 'Black Mountain Day 2', courseId: 'c3' }
         ];
 
         window.scs = {};        // key: `${playerId}-${roundId}-${hole}` -> gross score
@@ -244,6 +246,17 @@
         }
 
         window.chRound = function(id) {
+            if (id === window.roundId) return;
+
+            let fromCourse = currentCourse();
+            let toRound = rounds.find(r => r.id === id);
+            let toCourse = courses[toRound.courseId];
+
+            if (toCourse !== fromCourse) {
+                let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?');
+                if (!ok) return;
+            }
+
             window.roundId = id;
             window.hNum = 1;
             renderRoundPicker();
