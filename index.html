@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2025 Vietnam Golf Legends</title>
 
-    <!-- FIX: Explicitly grant permissions for Firebase scripts and data streams to connect through GitHub -->
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * wss://*.firebaseio.com wss://*.firebasedatabase.app https://*.googleapis.com;">
 
-    <!-- FIXED: these were bare "https://gstatic.com" (not real SDK URLs) loaded twice,
-         so firebase.initializeApp() threw a ReferenceError and sync never worked. -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <style>
@@ -39,8 +36,18 @@
         .sel-btn:active { background: #e8f5e9; border-color: var(--p); }
         .sw-link { font-size: 0.85rem; color: #0288d1; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 5px; display: inline-block; }
 
-        /* Highlight rule for active scorer */
         .my-row { background: #fff9c4 !important; border-left: 4px solid #fbc02d; }
+
+        /* Round picker (score entry screen) */
+        .round-pick { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 15px; }
+        .round-btn { flex: 0 0 auto; background: white; border: 2px solid #ddd; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; color: #555; white-space: nowrap; }
+        .round-btn.active { background: var(--p); border-color: var(--p); color: white; }
+        .course-label { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+        /* Round filter tabs (leaderboard screen) */
+        .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
+        .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; }
+        .lb-chip.active { background: #0288d1; border-color: #0288d1; color: white; }
     </style>
 </head>
 <body>
@@ -60,11 +67,14 @@
     </div>
 
     <div id="s-in" class="sc">
+        <div class="round-pick" id="roundPick"></div>
+
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
             <div style="text-align:center">
                 <h2 id="hd">Hole 1</h2>
                 <div id="hdt" style="font-size: 0.8rem; color: #666; margin-top: 2px;">Par 4 | SI 8</div>
+                <div id="courseLabel" class="course-label">Course</div>
             </div>
             <button onclick="window.chHole(1)">▶</button>
         </div>
@@ -84,6 +94,7 @@
     </div>
 
     <div id="s-bd" class="sc">
+        <div class="lb-filters" id="lbFilters"></div>
         <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
             <div style="width:10%">Pos</div><div style="width:40%">Player</div>
             <div style="width:15%;text-align:center">Thru</div><div style="width:20%;text-align:center">Net</div>
@@ -99,18 +110,11 @@
     <script>
         const config = {
             apiKey: "AIzaSyAJhRYf1PYn1mR__ycIyfVFehM1GWMTPco",
-            // FIXED: was "://firebaseapp.com" (missing project id + scheme)
             authDomain: "vietnam-golf-2025.firebaseapp.com",
             projectId: "vietnam-golf-2025",
             storageBucket: "vietnam-golf-2025.firebasestorage.app",
             messagingSenderId: "1055381438269",
             appId: "1:1055381438269:web:27e34cc9924d41affa4f54",
-            // FIXME: was "https://firebasedatabase.app" (missing project-specific subdomain).
-            // Open your Firebase console -> Realtime Database -> Data tab and copy the URL
-            // shown just above the JSON tree (it includes your region), e.g.
-            //   https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app
-            // or for legacy US instances:
-            //   https://vietnam-golf-2025-default-rtdb.firebaseio.com
             databaseURL: "https://vietnam-golf-2025-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
 
@@ -129,16 +133,67 @@
             { id: 7, name: 'Tony', handicap: 30 }, { id: 8, name: 'Brad', handicap: 32 }
         ];
 
-        const hls = {
-            1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
-            4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
-            7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
-            10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
-            13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
-            16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
+        // ===== COURSES =====
+        // EDIT THESE: replace par/si for each course with the real card for that course.
+        // "si" = stroke index (1 = hardest hole, 18 = easiest) — used for handicap strokes.
+        const courses = {
+            c1: {
+                name: 'Course A',
+                holes: {
+                    1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
+                    4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
+                    7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
+                    10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
+                    13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
+                    16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
+                }
+            },
+            c2: {
+                name: 'Course B',
+                holes: {
+                    1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
+                    4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
+                    7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
+                    10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
+                    13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
+                    16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
+                }
+            },
+            c3: {
+                name: 'Course C',
+                holes: {
+                    1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
+                    4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
+                    7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
+                    10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
+                    13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
+                    16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
+                }
+            }
         };
 
-        window.scs = {}; window.aId = null; window.hNum = 1; window.gross = 4; window.roomId = 'vietnam2025';
+        // ===== ROUNDS =====
+        // EDIT THIS: assign which course each round is played on.
+        // 4 rounds across 3 courses means one course gets repeated — change as needed.
+        const rounds = [
+            { id: 'r1', label: 'Round 1', courseId: 'c1' },
+            { id: 'r2', label: 'Round 2', courseId: 'c2' },
+            { id: 'r3', label: 'Round 3', courseId: 'c3' },
+            { id: 'r4', label: 'Round 4', courseId: 'c1' }
+        ];
+
+        window.scs = {};        // key: `${playerId}-${roundId}-${hole}` -> gross score
+        window.aId = null;
+        window.roundId = rounds[0].id;
+        window.hNum = 1;
+        window.gross = 4;
+        window.roomId = 'vietnam2025';
+        window.lbFilter = 'all'; // 'all' or a round id
+
+        function currentCourse() {
+            let r = rounds.find(r => r.id === window.roundId);
+            return courses[r.courseId];
+        }
 
         function init() {
             try {
@@ -147,7 +202,6 @@
                 if (roomParam) {
                     window.roomId = roomParam.replace(/[^a-zA-Z0-9-_]/gi, '');
                 } else {
-                    // FIX: Automatically match your GitHub repo folder structure if no parameter is provided
                     window.roomId = window.location.pathname.replace(/\//g, '').replace('index.html', '') || 'vietnam2025';
                 }
             } catch(e) {
@@ -157,6 +211,8 @@
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
             renderSetupGrid();
+            renderRoundPicker();
+            renderLbFilters();
             window.rBoard();
 
             if (db) {
@@ -173,6 +229,32 @@
                 '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">Hcp: ' + p.handicap + '</span></button>'
             ).join('');
         }
+
+        function renderRoundPicker() {
+            document.getElementById('roundPick').innerHTML = rounds.map(r =>
+                '<button class="round-btn' + (r.id === window.roundId ? ' active' : '') + '" onclick="window.chRound(\'' + r.id + '\')">' + r.label + '</button>'
+            ).join('');
+        }
+
+        function renderLbFilters() {
+            let chips = [{ id: 'all', label: 'All Rounds' }].concat(rounds.map(r => ({ id: r.id, label: r.label })));
+            document.getElementById('lbFilters').innerHTML = chips.map(c =>
+                '<button class="lb-chip' + (c.id === window.lbFilter ? ' active' : '') + '" onclick="window.chLbFilter(\'' + c.id + '\')">' + c.label + '</button>'
+            ).join('');
+        }
+
+        window.chRound = function(id) {
+            window.roundId = id;
+            window.hNum = 1;
+            renderRoundPicker();
+            upHole();
+        };
+
+        window.chLbFilter = function(id) {
+            window.lbFilter = id;
+            renderLbFilters();
+            window.rBoard();
+        };
 
         window.selectPlayer = function(id) {
             window.aId = id;
@@ -191,15 +273,17 @@
         };
 
         function upHole(){
-            let c = hls[window.hNum];
+            let course = currentCourse();
+            let c = course.holes[window.hNum];
             document.getElementById('hd').innerText = "Hole " + window.hNum;
             document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
+            document.getElementById('courseLabel').innerText = course.name;
             ldScore();
         }
 
         function ldScore(){
-            let key = window.aId + "-" + window.hNum;
-            window.gross = window.scs[key] || hls[window.hNum].par;
+            let key = window.aId + "-" + window.roundId + "-" + window.hNum;
+            window.gross = window.scs[key] || currentCourse().holes[window.hNum].par;
             document.getElementById('sd').innerText = window.gross;
         }
 
@@ -220,7 +304,7 @@
             window.gross = Math.max(1, window.gross + v);
             document.getElementById('sd').innerText = window.gross;
 
-            let targetKey = window.aId + '-' + window.hNum;
+            let targetKey = window.aId + '-' + window.roundId + '-' + window.hNum;
             window.scs[targetKey] = window.gross;
             window.rBoard();
 
@@ -245,24 +329,34 @@
             else { navigator.clipboard.writeText(url); alert('Link copied!'); }
         };
 
-        window.rBoard = function() {
-            let lb = pls.map(p => {
-                let thru = 0, netDiff = 0, pts = 0;
+        // Computes thru/net/points for one player over a given list of round objects
+        function tallyPlayer(p, roundList) {
+            let thru = 0, netDiff = 0, pts = 0;
+            roundList.forEach(r => {
+                let course = courses[r.courseId];
                 for (let h = 1; h <= 18; h++) {
-                    let mapKey = p.id + '-' + h;
+                    let mapKey = p.id + '-' + r.id + '-' + h;
                     if (window.scs[mapKey]) {
                         thru++;
-                        let g = window.scs[mapKey], par = hls[h].par, si = hls[h].si;
+                        let g = window.scs[mapKey], par = course.holes[h].par, si = course.holes[h].si;
                         let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= si ? 1 : 0);
                         let net = g - strokes;
                         netDiff += (net - par);
                         let pMax = par - net + 2; if (pMax > 0) pts += pMax;
                     }
                 }
+            });
+            return { thru, netDiff, pts };
+        }
 
-                // Determine CSS style layout hooks for active player rows
+        window.rBoard = function() {
+            let roundList = window.lbFilter === 'all' ? rounds : rounds.filter(r => r.id === window.lbFilter);
+            let maxThru = roundList.length * 18;
+
+            let lb = pls.map(p => {
+                let { thru, netDiff, pts } = tallyPlayer(p, roundList);
                 let isMe = (p.id === window.aId);
-                return { id: p.id, name: p.name, thru: thru, netDiff: netDiff, points: pts, isMe: isMe };
+                return { id: p.id, name: p.name, thru, netDiff, points: pts, isMe };
             });
 
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
@@ -270,7 +364,8 @@
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
                 let rowClass = p.isMe ? 'row my-row' : 'row';
-                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + p.thru + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
+                let thruDisplay = roundList.length > 1 ? (p.thru + '/' + maxThru) : p.thru;
+                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
         window.onload = init;
