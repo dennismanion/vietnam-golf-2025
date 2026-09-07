@@ -140,12 +140,12 @@
             c1: {
                 name: 'Course A',
                 holes: {
-                    1: { par: 4, si: 9 },  2: { par: 4, si: 11 }, 3: { par: 5, si: 3 },
-                    4: { par: 3, si: 15 }, 5: { par: 4, si: 1 },  6: { par: 4, si: 13 },
-                    7: { par: 4, si: 7 },  8: { par: 3, si: 17 }, 9: { par: 5, si: 5 },
-                    10: { par: 4, si: 14 }, 11: { par: 4, si: 16 }, 12: { par: 3, si: 18 },
-                    13: { par: 5, si: 4 },  14: { par: 4, si: 2 },  15: { par: 4, si: 10 },
-                    16: { par: 3, si: 12 }, 17: { par: 4, si: 6 },  18: { par: 5, si: 8 }
+                    1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 4 },
+                    4: { par: 3, si: 10 }, 5: { par: 4, si: 6 },  6: { par: 3, si: 18 },
+                    7: { par: 5, si: 12 },  8: { par: 14, si: 17 }, 9: { par: 4, si: 8 },
+                    10: { par: 4, si: 7 }, 11: { par: 4, si: 11 }, 12: { par: 5, si: 15 },
+                    13: { par: 4, si: 1 },  14: { par: 3, si: 17 },  15: { par: 4, si: 3 },
+                    16: { par: 4, si: 5 }, 17: { par: 3, si: 9 },  18: { par: 5, si: 13 }
                 }
             },
             c2: {
@@ -177,9 +177,9 @@
         // 4 rounds across 3 courses means one course gets repeated — change as needed.
         const rounds = [
             { id: 'r1', label: 'Springfield Country Club', courseId: 'c1' },
-            { id: 'r2', label: 'Black Mountain Day 1', courseId: 'c2' },
+            { id: 'r2', label: 'Black Mountain Day 1', courseId: 'c3' },
             { id: 'r3', label: 'Pineapple Valley', courseId: 'c3' },
-            { id: 'r4', label: 'Black Mountain Day 2', courseId: 'c1' }
+            { id: 'r4', label: 'Black Mountain Day 2', courseId: 'c3' }
         ];
 
         window.scs = {};        // key: `${playerId}-${roundId}-${hole}` -> gross score
