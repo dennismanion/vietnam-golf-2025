@@ -187,7 +187,7 @@
             c1: {
                 name: 'Course A',
                 holes: {
-                    1: { par: 4, si: 13 },  2: { par: 5, si: 9 }, 3: { par: 4, si: 3 },
+                     1: { par: 4, si: 13 },  2: { par: 5, si: 9 }, 3: { par: 4, si: 3 },
                     4: { par: 3, si: 11 }, 5: { par: 4, si: 5 },  6: { par: 3, si: 15 },
                     7: { par: 5, si: 17 },  8: { par: 4, si: 7 }, 9: { par: 4, si: 1 },
                     10: { par: 4, si: 8 }, 11: { par: 4, si: 10 }, 12: { par: 5, si: 16 },
@@ -559,7 +559,7 @@
             let course = courses[round.courseId];
 
             let rows = '';
-            let totalPar = 0, totalGross = 0, totalNet = 0, played = 0;
+            let totalPar = 0, totalGross = 0, totalNet = 0, totalPts = 0, played = 0;
 
             for (let h = 1; h <= 18; h++) {
                 let hole = course.holes[h];
@@ -571,13 +571,15 @@
                     played++;
                     let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= hole.si ? 1 : 0);
                     let net = gross - strokes;
+                    let pts = Math.max(0, hole.par - net + 2);
                     totalGross += gross;
                     totalNet += net;
+                    totalPts += pts;
 
                     let cls = net < hole.par ? 'sc-score-under' : (net === hole.par ? 'sc-score-par' : 'sc-score-over');
-                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>' + gross + '</td><td class="' + cls + '">' + net + '</td></tr>';
+                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>' + gross + '</td><td class="' + cls + '">' + net + '</td><td>' + pts + '</td></tr>';
                 } else {
-                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>-</td><td>-</td></tr>';
+                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>-</td><td>-</td><td>-</td></tr>';
                 }
             }
 
@@ -592,9 +594,9 @@
 
             wrap.innerHTML =
                 '<table class="sc-table">' +
-                '<thead><tr><th class="hole-col">Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th></tr></thead>' +
+                '<thead><tr><th class="hole-col">Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th><th>Pts</th></tr></thead>' +
                 '<tbody>' + rows +
-                '<tr class="total-row"><td class="hole-col">Total</td><td>' + totalPar + '</td><td>-</td><td>' + totalGross + '</td><td>' + netDisplay + '</td></tr>' +
+                '<tr class="total-row"><td class="hole-col">Total</td><td>' + totalPar + '</td><td>-</td><td>' + totalGross + '</td><td>' + netDisplay + '</td><td>' + totalPts + '</td></tr>' +
                 '</tbody></table>';
         }
 
