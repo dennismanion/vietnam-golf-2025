@@ -83,6 +83,14 @@
         .sc-score-over { color: #555; }
         .sc-score-par { color: var(--p); font-weight: bold; }
         .sc-empty { text-align: center; color: #888; padding: 20px 0; }
+
+        /* Custom share sheet */
+        .share-link-row { display: flex; gap: 8px; margin: 10px 0 20px; }
+        .share-link-row input { flex: 1; min-width: 0; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-size: 0.85rem; color: #555; background: #f9f9f9; }
+        .share-link-row button { background: #0288d1; color: white; border: none; border-radius: 6px; padding: 0 16px; font-weight: bold; }
+        .share-options { display: flex; justify-content: space-around; padding-bottom: 10px; }
+        .share-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: #333; font-size: 0.8rem; font-weight: 500; }
+        .share-opt-icon { width: 54px; height: 54px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
     </style>
 </head>
 <body>
@@ -138,6 +146,33 @@
         <div id="lbl"></div>
     </div>
 
+    <!-- Custom share sheet: shown when the device has no native Web Share
+         support. Gives real ways to send the link (not just "copied") so
+         the button is never a dead end. -->
+    <div id="shareOverlay" class="sc-overlay" onclick="if(event.target===this) window.closeShareSheet()">
+        <div class="sc-modal">
+            <div class="sc-modal-head">
+                <h2>Share Invite Link</h2>
+                <button class="sc-close" onclick="window.closeShareSheet()">✕</button>
+            </div>
+            <div class="share-link-row">
+                <input id="shareLinkInput" type="text" readonly>
+                <button id="shareCopyBtn" onclick="window.copyShareLink()">Copy</button>
+            </div>
+            <div class="share-options">
+                <a id="shareWhatsapp" class="share-opt" target="_blank" rel="noopener">
+                    <div class="share-opt-icon">💬</div><div>WhatsApp</div>
+                </a>
+                <a id="shareSms" class="share-opt">
+                    <div class="share-opt-icon">✉️</div><div>Messages</div>
+                </a>
+                <a id="shareEmail" class="share-opt">
+                    <div class="share-opt-icon">📧</div><div>Email</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Scorecard modal: opens when a player's row is tapped on the leaderboard.
          Shows their hole-by-hole gross/net for a chosen round. -->
     <div id="scorecardOverlay" class="sc-overlay" onclick="if(event.target===this) window.closeScorecard()">
@@ -187,12 +222,12 @@
             c1: {
                 name: 'Course A',
                 holes: {
-                     1: { par: 4, si: 13 },  2: { par: 5, si: 9 }, 3: { par: 4, si: 3 },
-                    4: { par: 3, si: 11 }, 5: { par: 4, si: 5 },  6: { par: 3, si: 15 },
-                    7: { par: 5, si: 17 },  8: { par: 4, si: 7 }, 9: { par: 4, si: 1 },
-                    10: { par: 4, si: 8 }, 11: { par: 4, si: 10 }, 12: { par: 5, si: 16 },
-                    13: { par: 4, si: 4 },  14: { par: 3, si: 14 },  15: { par: 4, si: 2 },
-                    16: { par: 4, si: 6 }, 17: { par: 3, si: 18 },  18: { par: 5, si: 12 }
+                    1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 4 },
+                    4: { par: 3, si: 10 }, 5: { par: 4, si: 6 },  6: { par: 3, si: 18 },
+                    7: { par: 5, si: 12 },  8: { par: 4, si: 17 }, 9: { par: 4, si: 8 },
+                    10: { par: 4, si: 7 }, 11: { par: 4, si: 11 }, 12: { par: 5, si: 15 },
+                    13: { par: 4, si: 1 },  14: { par: 3, si: 17 },  15: { par: 4, si: 3 },
+                    16: { par: 4, si: 5 }, 17: { par: 3, si: 9 },  18: { par: 5, si: 13 }
                 }
             },
             c2: {
@@ -429,37 +464,67 @@
             }
         };
 
-        // Robust share with layered fallbacks. Some phone browsers (and any
-        // page opened as a local file:// instead of a hosted https:// link)
-        // don't support navigator.share or navigator.clipboard at all — calling
-        // them directly can throw and silently do nothing. Every path below
-        // ends in some visible feedback so the button never appears "dead".
+        // Share flow: try the native share sheet first (best experience where
+        // supported). If that's unavailable or fails for a reason other than
+        // the user cancelling, open our own share sheet with real options
+        // (WhatsApp / SMS / Email / Copy) rather than just silently copying
+        // the link with no way to actually send it.
         window.shareRoom = async function() {
             let url = window.location.href;
 
             if (navigator.share) {
                 try {
                     await navigator.share({ title: 'VN Golf 2025', url: url });
-                    return; // share sheet handled it
+                    return; // native share sheet handled it
                 } catch (e) {
                     if (e && e.name === 'AbortError') return; // user cancelled, that's fine
-                    // otherwise fall through to the next fallback below
+                    // otherwise fall through to our own share sheet
                 }
             }
+
+            window.openShareSheet(url);
+        };
+
+        window.openShareSheet = function(url) {
+            document.getElementById('shareLinkInput').value = url;
+
+            // The link is put on its own line, separated from the message text,
+            // so mail/messaging apps reliably auto-detect and activate it
+            // (some clients, notably iOS Mail, can need multiple taps to open
+            // a link that's on the same line as other text).
+            let msg = encodeURIComponent('Join our golf scoring game!\n\n' + url);
+            document.getElementById('shareWhatsapp').href = 'https://wa.me/?text=' + msg;
+            document.getElementById('shareSms').href = 'sms:?&body=' + msg;
+            document.getElementById('shareEmail').href = 'mailto:?subject=' + encodeURIComponent('VN Golf 2025 - Join the game') + '&body=' + msg;
+
+            document.getElementById('shareOverlay').classList.add('show');
+        };
+
+        window.closeShareSheet = function() {
+            document.getElementById('shareOverlay').classList.remove('show');
+        };
+
+        window.copyShareLink = async function() {
+            let url = document.getElementById('shareLinkInput').value;
+            let btn = document.getElementById('shareCopyBtn');
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
                     await navigator.clipboard.writeText(url);
-                    triggerToast('Link copied!');
+                    btn.innerText = 'Copied!';
+                    setTimeout(() => { btn.innerText = 'Copy'; }, 1500);
                     return;
                 } catch (e) {
-                    // fall through to final fallback below
+                    // fall through to manual-select fallback
                 }
             }
 
-            // Final fallback: works everywhere, needs no permissions.
-            // Shows the link in a native prompt box so it can be selected and copied by hand.
-            window.prompt('Copy this link to share:', url);
+            // Final fallback: select the text so the user can copy manually.
+            let input = document.getElementById('shareLinkInput');
+            input.removeAttribute('readonly');
+            input.focus();
+            input.select();
+            input.setAttribute('readonly', true);
         };
 
         // Computes thru/net/points for one player over a given list of round objects
