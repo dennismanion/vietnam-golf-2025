@@ -394,10 +394,37 @@
             }
         };
 
-        window.shareRoom = function() {
+        // Robust share with layered fallbacks. Some phone browsers (and any
+        // page opened as a local file:// instead of a hosted https:// link)
+        // don't support navigator.share or navigator.clipboard at all — calling
+        // them directly can throw and silently do nothing. Every path below
+        // ends in some visible feedback so the button never appears "dead".
+        window.shareRoom = async function() {
             let url = window.location.href;
-            if (navigator.share) navigator.share({ title: 'VN Golf 2025', url: url });
-            else { navigator.clipboard.writeText(url); alert('Link copied!'); }
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'VN Golf 2025', url: url });
+                    return; // share sheet handled it
+                } catch (e) {
+                    if (e && e.name === 'AbortError') return; // user cancelled, that's fine
+                    // otherwise fall through to the next fallback below
+                }
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    triggerToast('Link copied!');
+                    return;
+                } catch (e) {
+                    // fall through to final fallback below
+                }
+            }
+
+            // Final fallback: works everywhere, needs no permissions.
+            // Shows the link in a native prompt box so it can be selected and copied by hand.
+            window.prompt('Copy this link to share:', url);
         };
 
         // Computes thru/net/points for one player over a given list of round objects
