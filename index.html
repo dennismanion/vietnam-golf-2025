@@ -61,6 +61,28 @@
         .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
         .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
         .lb-chip.active { background: #0288d1; border-color: #0288d1; color: white; }
+
+        /* Leaderboard rows are tappable to open a player's scorecard */
+        .row.tappable { cursor: pointer; }
+        .row.tappable:active { background: #f0f0f0; }
+        .my-row.tappable:active { background: #fff59d; }
+
+        /* Scorecard modal */
+        .sc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; }
+        .sc-overlay.show { display: flex; }
+        .sc-modal { background: white; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 15px; }
+        .sc-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .sc-modal-head h2 { color: var(--p); }
+        .sc-close { background: #eee; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; color: #555; }
+        .sc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .sc-table th, .sc-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #eee; }
+        .sc-table th { color: #888; font-size: 0.75rem; font-weight: bold; }
+        .sc-table td.hole-col, .sc-table th.hole-col { text-align: left; font-weight: bold; color: #333; }
+        .sc-table tr.total-row td { font-weight: bold; border-top: 2px solid #ccc; border-bottom: none; }
+        .sc-score-under { color: #c62828; font-weight: bold; }
+        .sc-score-over { color: #555; }
+        .sc-score-par { color: var(--p); font-weight: bold; }
+        .sc-empty { text-align: center; color: #888; padding: 20px 0; }
     </style>
 </head>
 <body>
@@ -116,9 +138,22 @@
         <div id="lbl"></div>
     </div>
 
+    <!-- Scorecard modal: opens when a player's row is tapped on the leaderboard.
+         Shows their hole-by-hole gross/net for a chosen round. -->
+    <div id="scorecardOverlay" class="sc-overlay" onclick="if(event.target===this) window.closeScorecard()">
+        <div class="sc-modal">
+            <div class="sc-modal-head">
+                <h2 id="scPlayerName">Player</h2>
+                <button class="sc-close" onclick="window.closeScorecard()">✕</button>
+            </div>
+            <div class="round-pick" id="scRoundPick"></div>
+            <div id="scTableWrap"></div>
+        </div>
+    </div>
+
     <div class="tabs" id="bottom-tabs" style="display:none;">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
-        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
+        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Scoreboard</button>
     </div>
     <script>
         const config = {
@@ -461,11 +496,108 @@
 
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
-                let rowClass = p.isMe ? 'row my-row' : 'row';
+                let rowClass = (p.isMe ? 'row my-row' : 'row') + ' tappable';
                 let thruDisplay = roundList.length > 1 ? (p.thru + '/' + maxThru) : p.thru;
-                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
+                return '<div class="' + rowClass + '" onclick="window.showScorecard(' + p.id + ')"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
+        // ===== SCORECARD MODAL =====
+        // Tapping a player's row on the leaderboard opens a hole-by-hole
+        // scorecard for that player. Defaults to whichever round is currently
+        // active for score entry (or the first round with any scores), and
+        // lets you flip between rounds inside the modal.
+        window.scPlayerId = null;
+        window.scRoundId = null;
+
+        window.showScorecard = function(playerId) {
+            window.scPlayerId = playerId;
+
+            // Pick a sensible starting round: current entry round if it has
+            // scores for this player, else the first round that does, else
+            // just the current entry round.
+            let hasScores = (rid) => {
+                for (let h = 1; h <= 18; h++) {
+                    if (window.scs[playerId + '-' + rid + '-' + h]) return true;
+                }
+                return false;
+            };
+            if (hasScores(window.roundId)) {
+                window.scRoundId = window.roundId;
+            } else {
+                let withData = rounds.find(r => hasScores(r.id));
+                window.scRoundId = withData ? withData.id : window.roundId;
+            }
+
+            let p = pls.find(pl => pl.id === playerId);
+            document.getElementById('scPlayerName').innerText = p.name + ' (Hcp: ' + p.handicap + ')';
+
+            renderScRoundPicker();
+            renderScTable();
+
+            document.getElementById('scorecardOverlay').classList.add('show');
+        };
+
+        window.closeScorecard = function() {
+            document.getElementById('scorecardOverlay').classList.remove('show');
+        };
+
+        function renderScRoundPicker() {
+            document.getElementById('scRoundPick').innerHTML = rounds.map(r =>
+                '<button class="round-btn' + (r.id === window.scRoundId ? ' active' : '') + '" onclick="window.chScRound(\'' + r.id + '\')">' + r.label + '</button>'
+            ).join('');
+        }
+
+        window.chScRound = function(id) {
+            window.scRoundId = id;
+            renderScRoundPicker();
+            renderScTable();
+        };
+
+        function renderScTable() {
+            let p = pls.find(pl => pl.id === window.scPlayerId);
+            let round = rounds.find(r => r.id === window.scRoundId);
+            let course = courses[round.courseId];
+
+            let rows = '';
+            let totalPar = 0, totalGross = 0, totalNet = 0, played = 0;
+
+            for (let h = 1; h <= 18; h++) {
+                let hole = course.holes[h];
+                let key = p.id + '-' + round.id + '-' + h;
+                let gross = window.scs[key];
+                totalPar += hole.par;
+
+                if (gross) {
+                    played++;
+                    let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= hole.si ? 1 : 0);
+                    let net = gross - strokes;
+                    totalGross += gross;
+                    totalNet += net;
+
+                    let cls = net < hole.par ? 'sc-score-under' : (net === hole.par ? 'sc-score-par' : 'sc-score-over');
+                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>' + gross + '</td><td class="' + cls + '">' + net + '</td></tr>';
+                } else {
+                    rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>-</td><td>-</td></tr>';
+                }
+            }
+
+            let wrap = document.getElementById('scTableWrap');
+            if (played === 0) {
+                wrap.innerHTML = '<div class="sc-empty">No scores entered yet for ' + round.label + '.</div>';
+                return;
+            }
+
+            let netToPar = totalNet - totalPar;
+            let netDisplay = netToPar === 0 ? 'E' : (netToPar > 0 ? '+' + netToPar : netToPar);
+
+            wrap.innerHTML =
+                '<table class="sc-table">' +
+                '<thead><tr><th class="hole-col">Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th></tr></thead>' +
+                '<tbody>' + rows +
+                '<tr class="total-row"><td class="hole-col">Total</td><td>' + totalPar + '</td><td>-</td><td>' + totalGross + '</td><td>' + netDisplay + '</td></tr>' +
+                '</tbody></table>';
+        }
+
         window.onload = init;
     </script>
 </body>
