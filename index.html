@@ -7,6 +7,19 @@
 
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * wss://*.firebaseio.com wss://*.firebasedatabase.app https://*.googleapis.com;">
 
+    <!-- Home-screen icon setup: lets recipients of the invite link
+         "Add to Home Screen" and get a golf-themed icon + app-like feel
+         instead of a generic browser bookmark. -->
+    <meta name="theme-color" content="#1b5e20">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VN Golf">
+    <meta name="application-name" content="VN Golf">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22: %22VN Golf Legends%22, %22short_name%22: %22VN Golf%22, %22start_url%22: %22.%22, %22display%22: %22standalone%22, %22background_color%22: %22%23f5f5f5%22, %22theme_color%22: %22%231b5e20%22, %22icons%22: [{%22src%22: %22data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAFCklEQVR4nO3dMY7TQBSH8VmEIkoEogEK0NJAQ5lLgLTiAHAMGkoajsEFEBKnSEmzFSsa6q1RKgqDNSRrx/Z/Zt6b8ferIgjRbPj0PHE2ztmjt08CsNQt6wWgbgQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkt60XUNSvzz/D5UV48TWE8PjdU+vltGCVE+jyIlxe/Hr/0nodLVjXBDoQN/T403fDldRr1QHF+pgoaRYCOkRJsxDQIA5wUxDQJIylIQQ0D2PpAAEtx1gKBJTEmksioJRWeIAjoFxWMpYIKLu2SyKgcpo8wBGQjWbGEgEZq30sEZAjNY4lAvKiomhiBGSs0m56BGSg9mhiBFROS930CCivJqOJEVB6zUcTI6BkVtVNj4Ak64wmRkBL0E2PgKYimhsR0BiiOYmAbkA30xHQX0SzzNoDohvRKgPi8i7prO/yLi++Wq+gKesLCEkRECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJKv8rowQQgj7632mR97c22R6ZIfaCShfEHNNXEkbndUXkJ9QREM/SF1huQ6omVZmufGndluVo4DWmctEx0+Ok6QsA6IYxcGzZ9VT6YCIJpP4iS0ZU/aAKKa8ksMpS0BE40rW4ZQyILrxr/8/SlWSGlAt0ex//A4h3H1+/+DPN8/uWCzHXqqxtDCgurqZcofVlhS0sTQvoFq66Zys5+DOhRv69uHL0F+9/vim5Ep6C0o6e/T2yfTHrcisenq5G4qj2W63Q3fb7Xb9bauYOidLGguoxm46y+rpZGqoS2ckmiFdTLYZheGSbg6o3nQ6rgJanE7MbUb/BVR7NzEPh7Ak6cScZBSikv4G1FI6vbkNJa8nYTqx3W7noaEQwube5tb+et9kPWFmELXUE0LYbrcjr+BK2l/vzx68emi9jBKGplGOLXPWenpO5tBaAiqmTD0dDw3xqYyUStYTfBzLCCiZwvV0zBsioDRM6unYNkRAkBBQAobjp2M4hBx9KgMHrq6uuhvn5+e2KxnBBFJlGj99PQe3h1gNIQLy6LiYKQ2ZICDJxPFz9U/WxZgMIQLKbu7BqC4ElNeyg9HxrtntPpqAnIqLcVtPICBF7tM/5/9M/yflt0EElFdFB6NlCCi7Wg5Gy3AmuoT2uukRkHfO39DgEOaa/3NIBORXFW9oEBAk7IHsOd/ljGMCLff645v4KghTHL+rOrLLWXAOqfznNAionONWTu5y/J9D4hBWyOIdsc9uekwgSAhIsmAbFEv7TpnJB1UJqJChVvzvcsbx2fgEpv9eR75X7Fafk2cTXVSNM2Ych7AExJ2QzvAyHQQECQGlYTiEbK8SREDJmDRkfo0pAkqpcEPm9QQCSq5YQx7qCQSUQ4GGnNQTCCiTrA35qSdwJjqrhq9U3yOg7Fr6roxjBFRI7d/WM4SAiqru+8JOIiAzDr+xcAECgoSX8ZAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBATJHwuW5xzGUd7mAAAAAElFTkSuQmCC%22, %22sizes%22: %22192x192%22, %22type%22: %22image/png%22}, {%22src%22: %22data:image/png;base64,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%22, %22sizes%22: %22512x512%22, %22type%22: %22image/png%22}]}">
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAEz0lEQVR4nO3dvU4UURyG8QMxG0qjsREKDDTSWO5NSEK4ALwMG0oaL8MbICRcxZY2VG5sqKnNVhYnHo+z+87Ox/mceX6xmMAKB+bJf2bHnfXg+ObUALsc5l4AykUckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgD0qvcC4jr+fsv83RlLh6MMSdfPuReTmXmMTmerszT1fPXT7nXUZmJT44Gv4+Tbz8yrqQK84rD50KhEmW+cTiME4U4/sM48RHHblRiiGOvOR90iKOHuY0T4hhiJuOEOMaa8DghjmCmVwlxhDeZgw5xxFX1OCGORGocJ8SRQS3jhDhSKzwIH3EkUlETDnFEVGMQPuIIrPYgfMQRxpSacIhjuEkG4SOOfiYfhI84OplVEw5xSPMMwkccTTThEIcxBCHMNw6C2Gt2cdBEd/OIgxupB5nBjdQXD7lXUKsZxIGhiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKANI93MDbGGLN52cT4sos3ixhftgQVxxFpZ/fVZRmVBlRBHIVEMIb6EQqPpqw4JtBBLzt/3nKKyRzH3GroovE7ydhK6jiooa+MrUSPgxrCStlKlDgIIhn/Vx08lGBxEER2wUMZG0eZTWx+/rYbrz++bXxqcX6UfDkZuP0yppIhcZQZhOWyaH9AykQeb+/Vpy7vrmN/9zHj5OD45nTAtynT3jJ8Ufvwg1gul+phq9XKbScIxelYyf44ym/C6lWGFaMPm0VLEIoNJWUiZl8lbXHUkoUZVIYVsI/BWfiKSmRHHBU14WSP4/H2fmQWvtVqlbgPq1HJv9dzbF429k/yJQUwbB+XWYYxZrlctpzGxtNo4NB9KP1Swuq7p4stw8rVh2WTOJxAFk73/V14GVbePsz0Xia4OD9q3/F7H9Bd1DKsvH0cvPv8Ptf3rlqCMpxc56dTmxxppCzD5JsfxAGJOHpLPDasLMODOPrJUoaVvo+yXmA8Q+v12m6cnZ3lXck2JkdOrozGdiGIo4cux5T1et1xN28/bO9fTHxkIY6Q3N4tcAwMQBzBNILY28f2SUZppx3E0VWM5yl+DR3LSHlk4dlKZqVNCx+TI5jGbi55r3dEHCG5ICZQhuGwEtw0srCIowhlXiflsJJfsddJiSOzAddJkyEOSJxzpFPmiUULJkdXl3fX/q2t7dZ/+R/Zud33InrK15MSR3jbHbSfWAy4iJ4Gh5XAhp1gFtWEw+ToodeRJYbE9ygQRwrl/+v8TsQRmOqg2BOLFtzx1lvHFwvajYAdpL/vjTiGSH+DQpY7IjmsQCKOIRI/beFG6sok6yNXGYY4xkjQR8YyDHGMFLWPvGUY4hgvUh/ZyzDEEUTwPkoow3CdI6B636RWIY7A6np763bEEUXhb4zfEXFEl/e/1BiDOCDxbAUScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHpD+F9s24EekDiAAAAABJRU5ErkJggg==">
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAFCklEQVR4nO3dMY7TQBSH8VmEIkoEogEK0NJAQ5lLgLTiAHAMGkoajsEFEBKnSEmzFSsa6q1RKgqDNSRrx/Z/Zt6b8ferIgjRbPj0PHE2ztmjt08CsNQt6wWgbgQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkt60XUNSvzz/D5UV48TWE8PjdU+vltGCVE+jyIlxe/Hr/0nodLVjXBDoQN/T403fDldRr1QHF+pgoaRYCOkRJsxDQIA5wUxDQJIylIQQ0D2PpAAEtx1gKBJTEmksioJRWeIAjoFxWMpYIKLu2SyKgcpo8wBGQjWbGEgEZq30sEZAjNY4lAvKiomhiBGSs0m56BGSg9mhiBFROS930CCivJqOJEVB6zUcTI6BkVtVNj4Ak64wmRkBL0E2PgKYimhsR0BiiOYmAbkA30xHQX0SzzNoDohvRKgPi8i7prO/yLi++Wq+gKesLCEkRECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJKv8rowQQgj7632mR97c22R6ZIfaCShfEHNNXEkbndUXkJ9QREM/SF1huQ6omVZmufGndluVo4DWmctEx0+Ok6QsA6IYxcGzZ9VT6YCIJpP4iS0ZU/aAKKa8ksMpS0BE40rW4ZQyILrxr/8/SlWSGlAt0ex//A4h3H1+/+DPN8/uWCzHXqqxtDCgurqZcofVlhS0sTQvoFq66Zys5+DOhRv69uHL0F+9/vim5Ep6C0o6e/T2yfTHrcisenq5G4qj2W63Q3fb7Xb9bauYOidLGguoxm46y+rpZGqoS2ckmiFdTLYZheGSbg6o3nQ6rgJanE7MbUb/BVR7NzEPh7Ak6cScZBSikv4G1FI6vbkNJa8nYTqx3W7noaEQwube5tb+et9kPWFmELXUE0LYbrcjr+BK2l/vzx68emi9jBKGplGOLXPWenpO5tBaAiqmTD0dDw3xqYyUStYTfBzLCCiZwvV0zBsioDRM6unYNkRAkBBQAobjp2M4hBx9KgMHrq6uuhvn5+e2KxnBBFJlGj99PQe3h1gNIQLy6LiYKQ2ZICDJxPFz9U/WxZgMIQLKbu7BqC4ElNeyg9HxrtntPpqAnIqLcVtPICBF7tM/5/9M/yflt0EElFdFB6NlCCi7Wg5Gy3AmuoT2uukRkHfO39DgEOaa/3NIBORXFW9oEBAk7IHsOd/ljGMCLff645v4KghTHL+rOrLLWXAOqfznNAionONWTu5y/J9D4hBWyOIdsc9uekwgSAhIsmAbFEv7TpnJB1UJqJChVvzvcsbx2fgEpv9eR75X7Fafk2cTXVSNM2Ych7AExJ2QzvAyHQQECQGlYTiEbK8SREDJmDRkfo0pAkqpcEPm9QQCSq5YQx7qCQSUQ4GGnNQTCCiTrA35qSdwJjqrhq9U3yOg7Fr6roxjBFRI7d/WM4SAiqru+8JOIiAzDr+xcAECgoSX8ZAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBAQJAUFCQJAQECQEBAkBQUJAkBAQJAQECQFBQkCQEBAkBATJHwuW5xzGUd7mAAAAAElFTkSuQmCC">
+
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <style>
@@ -48,21 +61,6 @@
         .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
         .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
         .lb-chip.active { background: #0288d1; border-color: #0288d1; color: white; }
-
-        /* Scorecard view */
-        .lb-row-tappable { cursor: pointer; }
-        .lb-row-tappable:active { background: #f0f0f0; }
-        .sc-back { background: none; border: none; color: #0288d1; font-weight: bold; font-size: 0.9rem; padding: 6px 0; margin-bottom: 10px; }
-        .sc-header { text-align: center; margin-bottom: 10px; }
-        .sc-header h2 { color: var(--p); font-size: 1.4rem; }
-        .sc-header div { font-size: 0.8rem; color: #666; margin-top: 2px; }
-        .sc-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-bottom: 14px; font-size: 0.78rem; }
-        .sc-table th, .sc-table td { padding: 6px 3px; text-align: center; border-bottom: 1px solid #eee; }
-        .sc-table th { background: #e8f5e9; color: var(--p); font-size: 0.72rem; }
-        .sc-table td:first-child, .sc-table th:first-child { text-align: left; padding-left: 8px; color: #666; font-weight: bold; }
-        .sc-table tr.sc-total td { font-weight: bold; background: #fafafa; }
-        .sc-table td.sc-gross { font-weight: bold; }
-        .sc-table td.sc-pts { color: var(--p); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -70,7 +68,7 @@
 
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
-        <div id="roomDisplay" class="room-tag">Room: Loading...</div>
+        <div id="roomDisplay" class="room-tag" onclick="window.tapRoomTag()" style="user-select:none; cursor:pointer;">Room: Loading...</div>
     </div>
 
     <div id="s-setup" class="sc active">
@@ -109,25 +107,18 @@
     </div>
 
     <div id="s-bd" class="sc">
-        <div id="lb-view">
-            <div class="lb-filters" id="lbFilters"></div>
-            <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
-                <div style="width:10%">Pos</div><div style="width:40%">Player</div>
-                <div style="width:15%;text-align:center">Thru</div><div style="width:20%;text-align:center">Net</div>
-                <div style="width:15%;text-align:right">Pts</div>
-            </div>
-            <div id="lbl"></div>
+        <div class="lb-filters" id="lbFilters"></div>
+        <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
+            <div style="width:10%">Pos</div><div style="width:40%">Player</div>
+            <div style="width:15%;text-align:center">Thru</div><div style="width:20%;text-align:center">Net</div>
+            <div style="width:15%;text-align:right">Pts</div>
         </div>
-
-        <div id="sc-view" style="display:none;">
-            <button class="sc-back" onclick="window.hideScorecard()">◀ Back to Board</button>
-            <div id="scCardContent"></div>
-        </div>
+        <div id="lbl"></div>
     </div>
 
     <div class="tabs" id="bottom-tabs" style="display:none;">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
-        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Leader Board</button>
+        <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Board</button>
     </div>
     <script>
         const config = {
@@ -195,15 +186,16 @@
 
         // ===== ROUNDS =====
         // Assigns which course each round is played on.
-        // NOTE: r2, r3 and r4 are all mapped to c3 (Course C) — switching between them
-        // won't trigger the "are you sure" prompt since it's technically the same card.
-        // If Pineapple Valley (r3) is actually a different layout to Black Mountain,
-        // give it its own entry in `courses` (e.g. c4) and point r3 at that instead.
+        // r2 and r4 (Black Mountain Day 1 & 2) share c3 (Course C) — same layout,
+        // but each round still has its own independent score sheet in `scs`.
+        // Switching rounds always prompts for confirmation (see chRound below),
+        // even between r2 and r4, so nobody accidentally enters Day 2 scores
+        // into Day 1's card or vice versa.
         const rounds = [
-            { id: 'r1', label: 'Springfield CC East Nth', courseId: 'c1' },
-            { id: 'r2', label: 'Black Mountain Day 1', courseId: 'c3' },
-            { id: 'r3', label: 'Pineapple Valley', courseId: 'c3' },
-            { id: 'r4', label: 'Black Mountain Day 2', courseId: 'c3' }
+            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1' },
+            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3' },
+            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2' },
+            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3' }
         ];
 
         window.scs = {};        // key: `${playerId}-${roundId}-${hole}` -> gross score
@@ -270,14 +262,14 @@
         window.chRound = function(id) {
             if (id === window.roundId) return;
 
-            let fromCourse = currentCourse();
             let toRound = rounds.find(r => r.id === id);
             let toCourse = courses[toRound.courseId];
 
-            if (toCourse !== fromCourse) {
-                let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?');
-                if (!ok) return;
-            }
+            // Always confirm on round switch — every round keeps its own score
+            // sheet, even rounds that share the same physical course (e.g. the
+            // two Black Mountain days both use Course C).
+            let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?\n\nThis is a separate score sheet from your current round.');
+            if (!ok) return;
 
             window.roundId = id;
             window.hNum = 1;
@@ -288,7 +280,6 @@
         window.chLbFilter = function(id) {
             window.lbFilter = id;
             renderLbFilters();
-            window.hideScorecard();
             window.rBoard();
         };
 
@@ -356,11 +347,50 @@
             document.getElementById('s-' + tab).classList.add('active');
             document.getElementById('t-' + tab).classList.add('active');
             if(tab === 'in') upHole();
-            if(tab === 'bd') {
-                window.lbFilter = window.roundId || 'all';
-                renderLbFilters();
-                window.hideScorecard();
-                window.rBoard();
+            if(tab === 'bd') window.rBoard();
+        };
+
+        // Hidden admin reset: tap the room tag 5 times within 2s to trigger.
+        // Not visible anywhere in the UI on purpose — this wipes ALL scores
+        // for every player, in every round, for this room. Only meant to be
+        // used once testing is done and you want a clean sheet before the
+        // real trip starts.
+        window.resetTapCount = 0;
+        window.tapRoomTag = function() {
+            window.resetTapCount++;
+            clearTimeout(window.resetTapTimer);
+            window.resetTapTimer = setTimeout(() => { window.resetTapCount = 0; }, 2000);
+
+            if (window.resetTapCount >= 5) {
+                window.resetTapCount = 0;
+                clearTimeout(window.resetTapTimer);
+                window.confirmResetAll();
+            }
+        };
+
+        window.confirmResetAll = function() {
+            let sure = confirm(
+                '⚠️ RESET ALL SCORES?\n\n' +
+                'This will permanently delete EVERY score for EVERY player ' +
+                'in EVERY round for room "' + window.roomId + '".\n\n' +
+                'This cannot be undone. Only do this once testing is finished ' +
+                'and before the real trip begins.'
+            );
+            if (!sure) return;
+
+            let doubleSure = confirm(
+                'Are you absolutely sure? Type-check: this deletes ' +
+                'ALL data for room "' + window.roomId + '" right now.'
+            );
+            if (!doubleSure) return;
+
+            window.scs = {};
+            if (window.aId !== null) ldScore();
+            window.rBoard();
+            triggerToast("All scores reset!");
+
+            if (db) {
+                db.ref('rooms/' + window.roomId + '/scores').remove();
             }
         };
 
@@ -402,88 +432,13 @@
 
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
 
-            let singleRound = roundList.length === 1;
-
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
                 let rowClass = p.isMe ? 'row my-row' : 'row';
-                if (singleRound) rowClass += ' lb-row-tappable';
                 let thruDisplay = roundList.length > 1 ? (p.thru + '/' + maxThru) : p.thru;
-                let clickAttr = singleRound ? ' onclick="window.showScorecard(' + p.id + ')"' : '';
-                return '<div class="' + rowClass + '"' + clickAttr + '><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
+                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
-
-        // ===== Individual scorecard (single-round view only) =====
-        window.showScorecard = function(playerId) {
-            if (window.lbFilter === 'all') return; // scorecards only make sense for one round at a time
-
-            let p = pls.find(pl => pl.id === playerId);
-            let round = rounds.find(r => r.id === window.lbFilter);
-            let course = courses[round.courseId];
-
-            let rows = [];
-            let outGross = 0, inGross = 0, outNet = 0, inNet = 0, outPts = 0, inPts = 0, anyEntered = false;
-
-            for (let h = 1; h <= 18; h++) {
-                let hole = course.holes[h];
-                let key = p.id + '-' + round.id + '-' + h;
-                let gross = window.scs[key];
-                let cellGross = '-', cellNet = '-', cellPts = '-';
-
-                if (gross) {
-                    anyEntered = true;
-                    let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= hole.si ? 1 : 0);
-                    let net = gross - strokes;
-                    let pts = Math.max(hole.par - net + 2, 0);
-                    cellGross = gross; cellNet = net; cellPts = pts;
-
-                    if (h <= 9) { outGross += gross; outNet += net; outPts += pts; }
-                    else { inGross += gross; inNet += net; inPts += pts; }
-                }
-
-                rows.push({ h, par: hole.par, si: hole.si, gross: cellGross, net: cellNet, pts: cellPts });
-            }
-
-            let parOut = 0, parIn = 0;
-            for (let h = 1; h <= 9; h++) parOut += course.holes[h].par;
-            for (let h = 10; h <= 18; h++) parIn += course.holes[h].par;
-
-            function rowsHtml(list) {
-                return list.map(r =>
-                    '<tr><td>' + r.h + '</td><td>' + r.par + '</td><td>' + r.si + '</td>' +
-                    '<td class="sc-gross">' + r.gross + '</td><td>' + r.net + '</td><td class="sc-pts">' + r.pts + '</td></tr>'
-                ).join('');
-            }
-
-            function totalRow(label, gross, net, pts, par) {
-                let netToPar = anyEntered ? (net - par) : '-';
-                let netDisplay = netToPar === 0 ? 'E' : (typeof netToPar === 'number' && netToPar > 0 ? '+' + netToPar : netToPar);
-                return '<tr class="sc-total"><td>' + label + '</td><td>' + par + '</td><td>-</td>' +
-                    '<td>' + (gross || '-') + '</td><td>' + netDisplay + '</td><td>' + (pts || '-') + '</td></tr>';
-            }
-
-            let html = '';
-            html += '<div class="sc-header"><h2>' + p.name + ' (Hcp: ' + p.handicap + ')</h2><div>' + round.label + ' · ' + course.name + '</div></div>';
-
-            html += '<table class="sc-table"><thead><tr><th>Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th><th>Pts</th></tr></thead><tbody>';
-            html += rowsHtml(rows.slice(0, 9));
-            html += totalRow('OUT', outGross, outNet, outPts, parOut);
-            html += rowsHtml(rows.slice(9, 18));
-            html += totalRow('IN', inGross, inNet, inPts, parIn);
-            html += totalRow('TOTAL', outGross + inGross, outNet + inNet, outPts + inPts, parOut + parIn);
-            html += '</tbody></table>';
-
-            document.getElementById('scCardContent').innerHTML = html;
-            document.getElementById('lb-view').style.display = 'none';
-            document.getElementById('sc-view').style.display = 'block';
-        };
-
-        window.hideScorecard = function() {
-            document.getElementById('sc-view').style.display = 'none';
-            document.getElementById('lb-view').style.display = 'block';
-        };
-
         window.onload = init;
     </script>
 </body>
