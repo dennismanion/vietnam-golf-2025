@@ -98,6 +98,13 @@
         .share-options { display: flex; justify-content: space-around; padding-bottom: 10px; }
         .share-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: #333; font-size: 0.8rem; font-weight: 500; }
         .share-opt-icon { width: 54px; height: 54px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+
+        /* Tap-to-record score display */
+        .score-tap-wrap { display: flex; flex-direction: column; align-items: center; }
+        .score-tap-hint { font-size: 0.75rem; color: #999; margin-top: 4px; }
+        #sd { cursor: pointer; border-radius: 12px; transition: background 0.15s ease; }
+        #sd:active { background: #e8f5e9; }
+        #sd.recorded { color: var(--p); }
     </style>
 </head>
 <body>
@@ -136,7 +143,10 @@
             <p style="color: #666; font-size: 1.1rem; font-weight: 500;">Gross Score</p>
             <div class="crow">
                 <button class="cbtn" onclick="window.adj(-1)">−</button>
-                <div style="font-size:4.5rem;font-weight:bold;width:90px;" id="sd">-</div>
+                <div class="score-tap-wrap">
+                    <div style="font-size:4.5rem;font-weight:bold;width:90px;" id="sd" onclick="window.saveScore()">-</div>
+                    <div class="score-tap-hint" id="sdHint">tap to record</div>
+                </div>
                 <button class="cbtn" onclick="window.adj(1)">+</button>
             </div>
             <button class="sbtn" onclick="window.shareRoom()">🔗 Share Game Invite Link</button>
@@ -376,6 +386,10 @@
             document.getElementById('s-setup').classList.add('active');
         };
 
+        function currentKey() {
+            return window.aId + "-" + window.roundId + "-" + window.hNum;
+        }
+
         function upHole(){
             let course = currentCourse();
             let c = course.holes[window.hNum];
@@ -386,9 +400,24 @@
         }
 
         function ldScore(){
-            let key = window.aId + "-" + window.roundId + "-" + window.hNum;
-            window.gross = window.scs[key] || currentCourse().holes[window.hNum].par;
+            let key = currentKey();
+            let saved = window.scs[key];
+            window.gross = saved || currentCourse().holes[window.hNum].par;
             document.getElementById('sd').innerText = window.gross;
+            updateRecordedState(saved !== undefined && saved !== null);
+        }
+
+        function updateRecordedState(isRecorded) {
+            let sd = document.getElementById('sd');
+            let hint = document.getElementById('sdHint');
+            if (!sd || !hint) return;
+            if (isRecorded) {
+                sd.classList.add('recorded');
+                hint.innerText = 'recorded ✓';
+            } else {
+                sd.classList.remove('recorded');
+                hint.innerText = 'tap to record';
+            }
         }
 
         function triggerToast(message) {
@@ -401,21 +430,46 @@
             }
         }
 
-        window.chHole = function(d) { window.hNum = Math.max(1, Math.min(18, window.hNum + d)); upHole(); };
+        // Shared save logic used by both the +/- adjustment buttons and by
+        // tapping the score number directly (e.g. to accept the default par
+        // value without having to nudge it away and back).
+        function commitScore() {
+            if (window.aId === null) return;
+            let targetKey = currentKey();
+            window.scs[targetKey] = window.gross;
+            window.rBoard();
+            updateRecordedState(true);
+            triggerToast("Score Saved!");
+            if (db) {
+                db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
+            }
+        }
+
+        window.chHole = function(d) {
+            // Warn (without blocking) if leaving a hole that has no saved score yet.
+            if (window.aId !== null) {
+                let key = currentKey();
+                let saved = window.scs[key];
+                if (saved === undefined || saved === null) {
+                    triggerToast("⚠️ Hole " + window.hNum + " not recorded!");
+                }
+            }
+            window.hNum = Math.max(1, Math.min(18, window.hNum + d));
+            upHole();
+        };
 
         window.adj = function(v) {
             if (window.aId === null) return;
             window.gross = Math.max(1, window.gross + v);
             document.getElementById('sd').innerText = window.gross;
+            commitScore();
+        };
 
-            let targetKey = window.aId + '-' + window.roundId + '-' + window.hNum;
-            window.scs[targetKey] = window.gross;
-            window.rBoard();
-
-            triggerToast("Score Saved!");
-            if (db) {
-                db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
-            }
+        // Tapping the score number itself records the currently displayed
+        // value (e.g. the default par) without needing to nudge +/- first.
+        window.saveScore = function() {
+            if (window.aId === null) return;
+            commitScore();
         };
 
         window.sw = function(tab) {
