@@ -64,6 +64,13 @@
         .round-btn.active { background: var(--p); border-color: var(--p); color: white; }
         .course-label { font-size: 0.8rem; color: #888; margin-top: 2px; }
 
+        /* Daily handicap line (score entry screen + scorecard modal) */
+        .dh-line { font-size: 0.85rem; color: #555; margin-top: 4px; }
+        .dh-line b { color: var(--p); }
+        .dh-sub { font-size: 0.72rem; color: #999; margin-top: 2px; }
+        .sc-dh { background: #e8f5e9; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; text-align: center; font-size: 0.85rem; color: #333; }
+        .sc-dh b { color: var(--p); }
+
         /* Round filter tabs (leaderboard screen) */
         .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
         .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
@@ -138,6 +145,8 @@
 
         <div class="cbox">
             <h2 id="pNameDisplay" style="color: var(--p); font-size: 1.8rem; margin-bottom: 2px;">Player</h2>
+            <div id="dhDisplay" class="dh-line"></div>
+            <div id="dhSub" class="dh-sub"></div>
             <button class="sw-link" onclick="window.showSetup()">◀ Switch Profile</button>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
             <p style="color: #666; font-size: 1.1rem; font-weight: 500;">Gross Score</p>
@@ -226,6 +235,8 @@
             console.warn("Database initialization deferred.", e);
         }
 
+        // "handicap" is each player's Handicap Index. The Daily (course) handicap
+        // is calculated from it per course -- see dailyHcp() below.
         const pls = [
             { id: 1, name: 'Ben', handicap: 20 }, { id: 2, name: 'Ian', handicap: 16 },
             { id: 3, name: 'Peter', handicap: 23 }, { id: 4, name: 'Neale', handicap: 28 },
@@ -233,11 +244,25 @@
             { id: 7, name: 'Tony', handicap: 30 }, { id: 8, name: 'Brad', handicap: 32 }
         ];
 
+        // Percentage of the calculated course handicap that players receive.
+        // 1.0 = 100% (full). Change to e.g. 0.95 if your comp uses a 95% allowance.
+        const HCP_ALLOWANCE = 1.0;
+
         // ===== COURSES =====
         // "si" = stroke index (1 = hardest hole, 18 = easiest) — used for handicap strokes.
+        //
+        // "slope" and "rating" (Course Rating) drive each player's daily handicap:
+        //     Daily Hcp = round( Index x Slope / 113 + (Course Rating - Par) )
+        //
+        // !!! TODO: replace the placeholder slope/rating values below with the real
+        // numbers from each course's scorecard for the tees you're playing.
+        // The placeholders (slope 113, rating = par) make Daily Hcp = Index, i.e.
+        // exactly the old behaviour, until you fill them in. !!!
         const courses = {
             c1: {
                 name: 'Course A',
+                slope: 113,   // TODO: real slope for Springfield CC (E/N) tees
+                rating: 72,   // TODO: real course rating
                 holes: {
                     1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 4 },
                     4: { par: 3, si: 10 }, 5: { par: 4, si: 6 },  6: { par: 3, si: 18 },
@@ -249,6 +274,8 @@
             },
             c2: {
                 name: 'Course B',
+                slope: 113,   // TODO: real slope for Pineapple Valley tees
+                rating: 70,   // TODO: real course rating
                 holes: {
                     1: { par: 4, si: 5 },  2: { par: 3, si: 17 }, 3: { par: 5, si: 11 },
                     4: { par: 3, si: 13 }, 5: { par: 4, si: 15 },  6: { par: 4, si: 3 },
@@ -260,6 +287,8 @@
             },
             c3: {
                 name: 'Course C',
+                slope: 113,   // TODO: real slope for Black Mountain (E/N) tees
+                rating: 72,   // TODO: real course rating
                 holes: {
                     1: { par: 4, si: 7 },  2: { par: 5, si: 13 }, 3: { par: 3, si: 15 },
                     4: { par: 4, si: 11 }, 5: { par: 4, si: 1 },  6: { par: 5, si: 9 },
@@ -298,6 +327,34 @@
             return courses[r.courseId];
         }
 
+        // ===== HANDICAP HELPERS =====
+        function coursePar(course) {
+            let total = 0;
+            for (let h = 1; h <= 18; h++) total += course.holes[h].par;
+            return total;
+        }
+
+        // Daily (course) handicap for a player on a given course:
+        //   Index x (Slope / 113) + (Course Rating - Par), then x allowance, rounded.
+        function dailyHcp(p, courseId) {
+            let c = courses[courseId];
+            let raw = p.handicap * (c.slope / 113) + (c.rating - coursePar(c));
+            return Math.round(raw * HCP_ALLOWANCE);
+        }
+
+        // Strokes received on one hole for a given daily handicap and stroke index.
+        // Handles handicaps over 18 (2+ strokes on the hardest holes) and plus
+        // handicaps (strokes given back on the easiest holes).
+        function strokesOnHole(dh, si) {
+            if (dh >= 0) {
+                return Math.floor(dh / 18) + ((dh % 18) >= si ? 1 : 0);
+            }
+            let plus = -dh;
+            return -(Math.floor(plus / 18) + ((plus % 18) >= (19 - si) ? 1 : 0));
+        }
+
+        function fmtDh(n) { return n < 0 ? '+' + Math.abs(n) : String(n); }
+
         function init() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -329,7 +386,7 @@
 
         function renderSetupGrid() {
             document.getElementById('setup-grid').innerHTML = pls.map(p =>
-                '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">Hcp: ' + p.handicap + '</span></button>'
+                '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">Index: ' + p.handicap + '</span></button>'
             ).join('');
         }
 
@@ -373,7 +430,7 @@
         window.selectPlayer = function(id) {
             window.aId = id;
             let ap = pls.find(p => p.id === window.aId);
-            if(ap) document.getElementById('pNameDisplay').innerText = ap.name + " (Hcp: " + ap.handicap + ")";
+            if(ap) document.getElementById('pNameDisplay').innerText = ap.name;
 
             document.getElementById('bottom-tabs').style.display = 'flex';
             window.sw('in');
@@ -390,12 +447,33 @@
             return window.aId + "-" + window.roundId + "-" + window.hNum;
         }
 
+        // Shows the active player's daily handicap for the round/course being scored.
+        function renderDailyHcp() {
+            let dhEl = document.getElementById('dhDisplay');
+            let subEl = document.getElementById('dhSub');
+            let ap = pls.find(p => p.id === window.aId);
+            if (!ap || !dhEl || !subEl) return;
+            let round = rounds.find(r => r.id === window.roundId);
+            let course = courses[round.courseId];
+            let dh = dailyHcp(ap, round.courseId);
+            dhEl.innerHTML = 'Daily Hcp: <b>' + fmtDh(dh) + '</b>';
+            subEl.innerText = 'Index ' + ap.handicap + ' · Slope ' + course.slope + ' · CR ' + course.rating + ' · Par ' + coursePar(course);
+        }
+
         function upHole(){
             let course = currentCourse();
             let c = course.holes[window.hNum];
+            let ap = pls.find(p => p.id === window.aId);
+            let round = rounds.find(r => r.id === window.roundId);
+            let strokeNote = '';
+            if (ap) {
+                let s = strokesOnHole(dailyHcp(ap, round.courseId), c.si);
+                if (s !== 0) strokeNote = ' | ' + (s > 0 ? s + ' stroke' + (s > 1 ? 's' : '') : 'gives back ' + Math.abs(s));
+            }
             document.getElementById('hd').innerText = "Hole " + window.hNum;
-            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si;
+            document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si + strokeNote;
             document.getElementById('courseLabel').innerText = course.name;
+            renderDailyHcp();
             ldScore();
         }
 
@@ -588,17 +666,20 @@
             input.setAttribute('readonly', true);
         };
 
-        // Computes thru/net/points for one player over a given list of round objects
+        // Computes thru/net/points for one player over a given list of round objects.
+        // The daily handicap is worked out separately for each round, from the
+        // slope/rating of the course that round is played on.
         function tallyPlayer(p, roundList) {
             let thru = 0, netDiff = 0, pts = 0;
             roundList.forEach(r => {
                 let course = courses[r.courseId];
+                let dh = dailyHcp(p, r.courseId);
                 for (let h = 1; h <= 18; h++) {
                     let mapKey = p.id + '-' + r.id + '-' + h;
                     if (window.scs[mapKey]) {
                         thru++;
                         let g = window.scs[mapKey], par = course.holes[h].par, si = course.holes[h].si;
-                        let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= si ? 1 : 0);
+                        let strokes = strokesOnHole(dh, si);
                         let net = g - strokes;
                         netDiff += (net - par);
                         let pMax = par - net + 2; if (pMax > 0) pts += pMax;
@@ -655,7 +736,7 @@
             }
 
             let p = pls.find(pl => pl.id === playerId);
-            document.getElementById('scPlayerName').innerText = p.name + ' (Hcp: ' + p.handicap + ')';
+            document.getElementById('scPlayerName').innerText = p.name + ' (Index: ' + p.handicap + ')';
 
             renderScRoundPicker();
             renderScTable();
@@ -683,6 +764,9 @@
             let p = pls.find(pl => pl.id === window.scPlayerId);
             let round = rounds.find(r => r.id === window.scRoundId);
             let course = courses[round.courseId];
+            let dh = dailyHcp(p, round.courseId);
+
+            let dhInfo = '<div class="sc-dh">Daily Hcp <b>' + fmtDh(dh) + '</b> &middot; Slope ' + course.slope + ' &middot; CR ' + course.rating + ' &middot; Par ' + coursePar(course) + '</div>';
 
             let rows = '';
             let totalPar = 0, totalGross = 0, totalNet = 0, totalPts = 0, played = 0;
@@ -695,7 +779,7 @@
 
                 if (gross) {
                     played++;
-                    let strokes = Math.floor(p.handicap / 18) + ((p.handicap % 18) >= hole.si ? 1 : 0);
+                    let strokes = strokesOnHole(dh, hole.si);
                     let net = gross - strokes;
                     let pts = Math.max(0, hole.par - net + 2);
                     totalGross += gross;
@@ -711,14 +795,14 @@
 
             let wrap = document.getElementById('scTableWrap');
             if (played === 0) {
-                wrap.innerHTML = '<div class="sc-empty">No scores entered yet for ' + round.label + '.</div>';
+                wrap.innerHTML = dhInfo + '<div class="sc-empty">No scores entered yet for ' + round.label + '.</div>';
                 return;
             }
 
             let netToPar = totalNet - totalPar;
             let netDisplay = netToPar === 0 ? 'E' : (netToPar > 0 ? '+' + netToPar : netToPar);
 
-            wrap.innerHTML =
+            wrap.innerHTML = dhInfo +
                 '<table class="sc-table">' +
                 '<thead><tr><th class="hole-col">Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th><th>Pts</th></tr></thead>' +
                 '<tbody>' + rows +
