@@ -235,38 +235,40 @@
             console.warn("Database initialization deferred.", e);
         }
 
-        // "handicap" is each player's Handicap Index. The Daily (course) handicap
-        // is calculated from it per course -- see dailyHcp() below.
+        // "handicap" is each player's GA Handicap. "sex" ('M' or 'F') selects the
+        // Consistency Factor. The Daily Handicap is calculated from these per
+        // course -- see dailyHcp() below.
         const pls = [
-            { id: 1, name: 'Ben', handicap: 20 }, { id: 2, name: 'Ian', handicap: 16 },
-            { id: 3, name: 'Peter', handicap: 23 }, { id: 4, name: 'Neale', handicap: 28 },
-            { id: 5, name: 'Neal', handicap: 6 }, { id: 6, name: 'Dennis', handicap: 13 },
-            { id: 7, name: 'Tony', handicap: 30 }, { id: 8, name: 'Brad', handicap: 32 }
+            { id: 1, name: 'Ben', handicap: 20, sex: 'M' }, { id: 2, name: 'Ian', handicap: 16, sex: 'M' },
+            { id: 3, name: 'Peter', handicap: 23, sex: 'M' }, { id: 4, name: 'Neale', handicap: 28, sex: 'M' },
+            { id: 5, name: 'Neal', handicap: 6, sex: 'M' }, { id: 6, name: 'Dennis', handicap: 13, sex: 'M' },
+            { id: 7, name: 'Tony', handicap: 30, sex: 'M' }, { id: 8, name: 'Brad', handicap: 32, sex: 'M' }
         ];
 
-        // Percentage of the calculated course handicap that players receive.
-        // 1.0 = 100% (full). Change to e.g. 0.95 if your comp uses a 95% allowance.
-        const HCP_ALLOWANCE = 1.0;
+        // Golf Australia Daily Handicap constants (18-hole formula):
+        //   ((GA Hcp x Slope / 113) + (Scratch Rating - Par)) x 0.93 x Consistency Factor
+        const GA_MULTIPLIER = 0.93;
+        const CONSISTENCY_FACTOR = { M: 0.9986, F: 1.0483 };
 
         // ===== COURSES =====
         // "si" = stroke index (1 = hardest hole, 18 = easiest) — used for handicap strokes.
         //
-        // "slope" and "rating" (Course Rating) drive each player's daily handicap:
-        //     Daily Hcp = round( Index x Slope / 113 + (Course Rating - Par) )
+        // "slope" (Slope Rating) and "scratch" (Scratch Rating) drive each player's
+        // daily handicap -- see dailyHcp() for the full Golf Australia formula.
         //
-        // !!! TODO: replace the placeholder slope/rating values below with the real
+        // !!! TODO: replace the placeholder slope/scratch values below with the real
         // numbers from each course's scorecard for the tees you're playing.
-        // The placeholders (slope 113, rating = par) make Daily Hcp = Index, i.e.
-        // exactly the old behaviour, until you fill them in. !!!
+        // The placeholders (slope 113, scratch = par) leave only the 0.93 x
+        // Consistency Factor adjustment in effect until you fill them in. !!!
         const courses = {
             c1: {
                 name: 'Course A',
-                slope: 113,   // TODO: real slope for Springfield CC (E/N) tees
-                rating: 72,   // TODO: real course rating
+                slope: 113,   // 127: real slope for Springfield CC (A/B) tees
+                scratch: 72,  // 71.6: real Scratch Rating
                 holes: {
-                    1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 4 },
+                    1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 2 },
                     4: { par: 3, si: 10 }, 5: { par: 4, si: 6 },  6: { par: 3, si: 18 },
-                    7: { par: 5, si: 12 },  8: { par: 4, si: 17 }, 9: { par: 4, si: 8 },
+                    7: { par: 5, si: 12 },  8: { par: 4, si: 14 }, 9: { par: 4, si: 8 },
                     10: { par: 4, si: 7 }, 11: { par: 4, si: 11 }, 12: { par: 5, si: 15 },
                     13: { par: 4, si: 1 },  14: { par: 3, si: 17 },  15: { par: 4, si: 3 },
                     16: { par: 4, si: 5 }, 17: { par: 3, si: 9 },  18: { par: 5, si: 13 }
@@ -274,8 +276,8 @@
             },
             c2: {
                 name: 'Course B',
-                slope: 113,   // TODO: real slope for Pineapple Valley tees
-                rating: 70,   // TODO: real course rating
+                slope: 113,   // 120: real slope for Pineapple Valley tees
+                scratch: 70,  // 70.3: real Scratch Rating
                 holes: {
                     1: { par: 4, si: 5 },  2: { par: 3, si: 17 }, 3: { par: 5, si: 11 },
                     4: { par: 3, si: 13 }, 5: { par: 4, si: 15 },  6: { par: 4, si: 3 },
@@ -287,8 +289,8 @@
             },
             c3: {
                 name: 'Course C',
-                slope: 113,   // TODO: real slope for Black Mountain (E/N) tees
-                rating: 72,   // TODO: real course rating
+                slope: 113,   // 127: real slope for Black Mountain (E/N) tees
+                scratch: 72,  // 71.2: real Scratch Rating
                 holes: {
                     1: { par: 4, si: 7 },  2: { par: 5, si: 13 }, 3: { par: 3, si: 15 },
                     4: { par: 4, si: 11 }, 5: { par: 4, si: 1 },  6: { par: 5, si: 9 },
@@ -334,12 +336,13 @@
             return total;
         }
 
-        // Daily (course) handicap for a player on a given course:
-        //   Index x (Slope / 113) + (Course Rating - Par), then x allowance, rounded.
+        // Golf Australia 18-hole Daily Handicap, rounded to the nearest whole number:
+        //   ((GA Hcp x Slope / 113) + (Scratch Rating - Par)) x 0.93 x Consistency Factor
         function dailyHcp(p, courseId) {
             let c = courses[courseId];
-            let raw = p.handicap * (c.slope / 113) + (c.rating - coursePar(c));
-            return Math.round(raw * HCP_ALLOWANCE);
+            let cf = CONSISTENCY_FACTOR[p.sex] || CONSISTENCY_FACTOR.M;
+            let raw = (p.handicap * (c.slope / 113) + (c.scratch - coursePar(c))) * GA_MULTIPLIER * cf;
+            return Math.round(raw);
         }
 
         // Strokes received on one hole for a given daily handicap and stroke index.
@@ -386,7 +389,7 @@
 
         function renderSetupGrid() {
             document.getElementById('setup-grid').innerHTML = pls.map(p =>
-                '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">Index: ' + p.handicap + '</span></button>'
+                '<button class="sel-btn" onclick="window.selectPlayer(' + p.id + ')">' + p.name + '<br><span style="font-size:0.75rem; font-weight:normal; color:#666;">GA Hcp: ' + p.handicap + '</span></button>'
             ).join('');
         }
 
@@ -457,7 +460,7 @@
             let course = courses[round.courseId];
             let dh = dailyHcp(ap, round.courseId);
             dhEl.innerHTML = 'Daily Hcp: <b>' + fmtDh(dh) + '</b>';
-            subEl.innerText = 'Index ' + ap.handicap + ' · Slope ' + course.slope + ' · CR ' + course.rating + ' · Par ' + coursePar(course);
+            subEl.innerText = 'GA Hcp ' + ap.handicap + ' · Slope ' + course.slope + ' · SR ' + course.scratch + ' · Par ' + coursePar(course);
         }
 
         function upHole(){
@@ -736,7 +739,7 @@
             }
 
             let p = pls.find(pl => pl.id === playerId);
-            document.getElementById('scPlayerName').innerText = p.name + ' (Index: ' + p.handicap + ')';
+            document.getElementById('scPlayerName').innerText = p.name + ' (GA Hcp: ' + p.handicap + ')';
 
             renderScRoundPicker();
             renderScTable();
@@ -766,7 +769,7 @@
             let course = courses[round.courseId];
             let dh = dailyHcp(p, round.courseId);
 
-            let dhInfo = '<div class="sc-dh">Daily Hcp <b>' + fmtDh(dh) + '</b> &middot; Slope ' + course.slope + ' &middot; CR ' + course.rating + ' &middot; Par ' + coursePar(course) + '</div>';
+            let dhInfo = '<div class="sc-dh">Daily Hcp <b>' + fmtDh(dh) + '</b> &middot; Slope ' + course.slope + ' &middot; SR ' + course.scratch + ' &middot; Par ' + coursePar(course) + '</div>';
 
             let rows = '';
             let totalPar = 0, totalGross = 0, totalNet = 0, totalPts = 0, played = 0;
