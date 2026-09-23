@@ -7,14 +7,6 @@
 
     <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * wss://*.firebaseio.com wss://*.firebasedatabase.app https://*.googleapis.com;">
 
-    <!-- Home-screen icon setup: lets recipients of the invite link
-         "Add to Home Screen" and get a golf-themed icon + app-like feel
-         instead of a generic browser bookmark.
-         NOTE: these reference real files (manifest.json, apple-touch-icon.png,
-         icon-192.png, icon-512.png) that must sit alongside this index.html
-         in the same folder. Data-URI icons were tried first but iOS Safari
-         doesn't reliably read those for "Add to Home Screen" -- real files
-         are the standard, dependable approach. -->
     <meta name="theme-color" content="#1b5e20">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,7 +18,6 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
-
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
     <style>
@@ -35,7 +26,7 @@
         body { background: #f5f5f5; padding-bottom: 75px; }
         .h { background: var(--p); color: white; padding: 15px; text-align: center; position: relative; }
         .tabs { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #ddd; z-index: 100; }
-        .tab { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: none; background: none; }
+        .tab { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #666; border: none; background: none; font-size: 0.78rem; }
         .tab.active { background: #e8f5e9; color: var(--p); }
         .sc { display: none; padding: 15px; }
         .sc.active { display: block; }
@@ -54,34 +45,30 @@
         .sel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
         .sel-btn { background: white; border: 2px solid #ddd; padding: 15px 10px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; color: #333; cursor: pointer; }
         .sel-btn:active { background: #e8f5e9; border-color: var(--p); }
-        .sw-link { font-size: 0.85rem; color: #0288d1; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 5px; display: inline-block; }
+        .sw-link { font-size: 0.85rem; color: #0288d1; text-decoration: underline; background: none; border: none; cursor: pointer; margin-top: 5px; display: inline-block; margin-right: 10px; }
 
         .my-row { background: #fff9c4 !important; border-left: 4px solid #fbc02d; }
 
-        /* Round picker (score entry screen) */
         .round-pick { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 15px; }
         .round-btn { flex: 0 0 auto; background: white; border: 2px solid #ddd; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; color: #555; white-space: nowrap; }
         .round-btn.active { background: var(--p); border-color: var(--p); color: white; }
         .course-label { font-size: 0.8rem; color: #888; margin-top: 2px; }
 
-        /* Daily handicap line (score entry screen + scorecard modal) */
         .dh-line { font-size: 0.85rem; color: #555; margin-top: 4px; }
         .dh-line b { color: var(--p); }
         .dh-sub { font-size: 0.72rem; color: #999; margin-top: 2px; }
         .sc-dh { background: #e8f5e9; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; text-align: center; font-size: 0.85rem; color: #333; }
         .sc-dh b { color: var(--p); }
+        .partner-line { font-size: 0.8rem; color: #0288d1; margin-top: 2px; font-weight: 500; }
 
-        /* Round filter tabs (leaderboard screen) */
         .lb-filters { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
         .lb-chip { flex: 0 0 auto; background: white; border: 1px solid #ccc; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: bold; color: #555; white-space: nowrap; }
         .lb-chip.active { background: #0288d1; border-color: #0288d1; color: white; }
 
-        /* Leaderboard rows are tappable to open a player's scorecard */
         .row.tappable { cursor: pointer; }
         .row.tappable:active { background: #f0f0f0; }
         .my-row.tappable:active { background: #fff59d; }
 
-        /* Scorecard modal */
         .sc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; }
         .sc-overlay.show { display: flex; }
         .sc-modal { background: white; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 15px; }
@@ -98,7 +85,6 @@
         .sc-score-par { color: var(--p); font-weight: bold; }
         .sc-empty { text-align: center; color: #888; padding: 20px 0; }
 
-        /* Custom share sheet */
         .share-link-row { display: flex; gap: 8px; margin: 10px 0 20px; }
         .share-link-row input { flex: 1; min-width: 0; border: 1px solid #ddd; border-radius: 6px; padding: 10px; font-size: 0.85rem; color: #555; background: #f9f9f9; }
         .share-link-row button { background: #0288d1; color: white; border: none; border-radius: 6px; padding: 0 16px; font-weight: bold; }
@@ -106,7 +92,6 @@
         .share-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: #333; font-size: 0.8rem; font-weight: 500; }
         .share-opt-icon { width: 54px; height: 54px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
 
-        /* Tap-to-record score display */
         .score-tap-wrap { display: flex; flex-direction: column; align-items: center; }
         .score-tap-hint { font-size: 0.75rem; color: #999; margin-top: 4px; }
         #sd { cursor: pointer; border-radius: 12px; transition: background 0.15s ease; }
@@ -130,6 +115,15 @@
         </div>
     </div>
 
+    <div id="s-partner" class="sc">
+        <div class="welcome-box">
+            <h2 id="partnerWho">Player</h2>
+            <p style="color: #666; margin-top: 5px;">Pick your 4BBB playing partner for today (best-ball score per hole counts for your team).</p>
+            <div class="sel-grid" id="partner-grid"></div>
+            <button class="sw-link" onclick="window.skipPartner()" style="margin-top:15px;">Play Solo — No Partner</button>
+        </div>
+    </div>
+
     <div id="s-in" class="sc">
         <div class="round-pick" id="roundPick"></div>
 
@@ -145,9 +139,11 @@
 
         <div class="cbox">
             <h2 id="pNameDisplay" style="color: var(--p); font-size: 1.8rem; margin-bottom: 2px;">Player</h2>
+            <div id="partnerLine" class="partner-line"></div>
             <div id="dhDisplay" class="dh-line"></div>
             <div id="dhSub" class="dh-sub"></div>
             <button class="sw-link" onclick="window.showSetup()">◀ Switch Profile</button>
+            <button class="sw-link" onclick="window.showPartnerSelect()">🤝 Switch Partner</button>
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
             <p style="color: #666; font-size: 1.1rem; font-weight: 500;">Gross Score</p>
             <div class="crow">
@@ -172,9 +168,17 @@
         <div id="lbl"></div>
     </div>
 
-    <!-- Custom share sheet: shown when the device has no native Web Share
-         support. Gives real ways to send the link (not just "copied") so
-         the button is never a dead end. -->
+    <div id="s-4bbb" class="sc">
+        <div class="lb-filters" id="bbbFilters"></div>
+        <div style="display:flex;background:#e0e0e0;padding:10px;font-weight:bold;font-size:0.85rem;border-radius:4px;margin-bottom:5px;">
+            <div style="width:10%">Pos</div><div style="width:40%">Team</div>
+            <div style="width:15%;text-align:center">Thru</div><div style="width:20%;text-align:center">Net</div>
+            <div style="width:15%;text-align:right">Pts</div>
+        </div>
+        <div id="bbbl"></div>
+        <p style="color:#888; font-size:0.78rem; margin-top:12px; text-align:center;">4BBB = best-ball. Each hole, your team takes the better of you and your partner's net score/points.</p>
+    </div>
+
     <div id="shareOverlay" class="sc-overlay" onclick="if(event.target===this) window.closeShareSheet()">
         <div class="sc-modal">
             <div class="sc-modal-head">
@@ -199,8 +203,6 @@
         </div>
     </div>
 
-    <!-- Scorecard modal: opens when a player's row is tapped on the leaderboard.
-         Shows their hole-by-hole gross/net for a chosen round. -->
     <div id="scorecardOverlay" class="sc-overlay" onclick="if(event.target===this) window.closeScorecard()">
         <div class="sc-modal">
             <div class="sc-modal-head">
@@ -215,6 +217,7 @@
     <div class="tabs" id="bottom-tabs" style="display:none;">
         <button class="tab active" id="t-in" onclick="window.sw('in')">✍️ My Score</button>
         <button class="tab" id="t-bd" onclick="window.sw('bd')">🏆 Scoreboard</button>
+        <button class="tab" id="t-4bbb" onclick="window.sw('4bbb')">🤝 4BBB</button>
     </div>
     <script>
         const config = {
@@ -235,9 +238,6 @@
             console.warn("Database initialization deferred.", e);
         }
 
-        // "handicap" is each player's GA Handicap. "sex" ('M' or 'F') selects the
-        // Consistency Factor. The Daily Handicap is calculated from these per
-        // course -- see dailyHcp() below.
         const pls = [
             { id: 1, name: 'Ben', handicap: 20, sex: 'M' }, { id: 2, name: 'Ian', handicap: 16, sex: 'M' },
             { id: 3, name: 'Peter', handicap: 23, sex: 'M' }, { id: 4, name: 'Clinton', handicap: 11, sex: 'M' },
@@ -245,26 +245,12 @@
             { id: 7, name: 'TK', handicap: 10, sex: 'M' }, { id: 8, name: 'Brad', handicap: 32, sex: 'M' }
         ];
 
-        // Golf Australia Daily Handicap constants (18-hole formula):
-        //   ((GA Hcp x Slope / 113) + (Scratch Rating - Par)) x 0.93 x Consistency Factor
         const GA_MULTIPLIER = 0.93;
         const CONSISTENCY_FACTOR = { M: 0.9986, F: 1.0483 };
 
-        // ===== COURSES =====
-        // "si" = stroke index (1 = hardest hole, 18 = easiest) — used for handicap strokes.
-        //
-        // "slope" (Slope Rating) and "scratch" (Scratch Rating) drive each player's
-        // daily handicap -- see dailyHcp() for the full Golf Australia formula.
-        //
-        // !!! TODO: replace the placeholder slope/scratch values below with the real
-        // numbers from each course's scorecard for the tees you're playing.
-        // The placeholders (slope 113, scratch = par) leave only the 0.93 x
-        // Consistency Factor adjustment in effect until you fill them in. !!!
         const courses = {
             c1: {
-                name: 'Course A',
-                slope: 127,   // 127: real slope for Springfield CC (A/B) tees
-                scratch: 71.6,  // 71.6: real Scratch Rating
+                name: 'Course A', slope: 127, scratch: 71.6,
                 holes: {
                     1: { par: 4, si: 16 },  2: { par: 5, si: 4 }, 3: { par: 4, si: 2 },
                     4: { par: 3, si: 10 }, 5: { par: 4, si: 6 },  6: { par: 3, si: 18 },
@@ -275,9 +261,7 @@
                 }
             },
             c2: {
-                name: 'Course B',
-                slope: 120,   // 120: real slope for Pineapple Valley tees
-                scratch: 70.3,  // 70.3: real Scratch Rating
+                name: 'Course B', slope: 120, scratch: 70.3,
                 holes: {
                     1: { par: 4, si: 5 },  2: { par: 3, si: 17 }, 3: { par: 5, si: 11 },
                     4: { par: 3, si: 13 }, 5: { par: 4, si: 15 },  6: { par: 4, si: 3 },
@@ -288,9 +272,7 @@
                 }
             },
             c3: {
-                name: 'Course C',
-                slope: 127,   // 127: real slope for Black Mountain (E/N) tees
-                scratch: 71.2,  // 71.2: real Scratch Rating
+                name: 'Course C', slope: 127, scratch: 71.2,
                 holes: {
                     1: { par: 4, si: 7 },  2: { par: 5, si: 13 }, 3: { par: 3, si: 15 },
                     4: { par: 4, si: 11 }, 5: { par: 4, si: 1 },  6: { par: 5, si: 9 },
@@ -302,13 +284,6 @@
             }
         };
 
-        // ===== ROUNDS =====
-        // Assigns which course each round is played on.
-        // r2 and r4 (Black Mountain Day 1 & 2) share c3 (Course C) — same layout,
-        // but each round still has its own independent score sheet in `scs`.
-        // Switching rounds always prompts for confirmation (see chRound below),
-        // even between r2 and r4, so nobody accidentally enters Day 2 scores
-        // into Day 1's card or vice versa.
         const rounds = [
             { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1' },
             { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3' },
@@ -316,28 +291,27 @@
             { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3' }
         ];
 
-        window.scs = {};        // key: `${playerId}-${roundId}-${hole}` -> gross score
+        window.scs = {};
+        window.pairs = {};       // playerId -> partnerId (or null for solo)
         window.aId = null;
         window.roundId = rounds[0].id;
         window.hNum = 1;
         window.gross = 4;
         window.roomId = 'vietnam2025';
-        window.lbFilter = 'all'; // 'all' or a round id
+        window.lbFilter = 'all';
+        window.bbbFilter = 'all';
 
         function currentCourse() {
             let r = rounds.find(r => r.id === window.roundId);
             return courses[r.courseId];
         }
 
-        // ===== HANDICAP HELPERS =====
         function coursePar(course) {
             let total = 0;
             for (let h = 1; h <= 18; h++) total += course.holes[h].par;
             return total;
         }
 
-        // Golf Australia 18-hole Daily Handicap, rounded to the nearest whole number:
-        //   ((GA Hcp x Slope / 113) + (Scratch Rating - Par)) x 0.93 x Consistency Factor
         function dailyHcp(p, courseId) {
             let c = courses[courseId];
             let cf = CONSISTENCY_FACTOR[p.sex] || CONSISTENCY_FACTOR.M;
@@ -345,9 +319,6 @@
             return Math.round(raw);
         }
 
-        // Strokes received on one hole for a given daily handicap and stroke index.
-        // Handles handicaps over 18 (2+ strokes on the hardest holes) and plus
-        // handicaps (strokes given back on the easiest holes).
         function strokesOnHole(dh, si) {
             if (dh >= 0) {
                 return Math.floor(dh / 18) + ((dh % 18) >= si ? 1 : 0);
@@ -376,13 +347,21 @@
             renderSetupGrid();
             renderRoundPicker();
             renderLbFilters();
+            renderBbbFilters();
             window.rBoard();
+            window.rBBB();
 
             if (db) {
                 db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
                     window.scs = snap.val() || {};
                     if (window.aId !== null) ldScore();
                     window.rBoard();
+                    window.rBBB();
+                });
+                db.ref('rooms/' + window.roomId + '/pairs').on('value', (snap) => {
+                    window.pairs = snap.val() || {};
+                    if (window.aId !== null) updatePartnerLine();
+                    window.rBBB();
                 });
             }
         }
@@ -406,18 +385,63 @@
             ).join('');
         }
 
+        function renderBbbFilters() {
+            let chips = [{ id: 'all', label: 'All Rounds' }].concat(rounds.map(r => ({ id: r.id, label: r.label })));
+            document.getElementById('bbbFilters').innerHTML = chips.map(c =>
+                '<button class="lb-chip' + (c.id === window.bbbFilter ? ' active' : '') + '" onclick="window.chBbbFilter(\'' + c.id + '\')">' + c.label + '</button>'
+            ).join('');
+        }
+
+        // ===== PARTNER SELECTION (4BBB) =====
+        function renderPartnerGrid() {
+            let ap = pls.find(p => p.id === window.aId);
+            document.getElementById('partnerWho').innerText = ap ? ap.name + "'s Partner" : 'Pick a Partner';
+            let current = window.pairs[window.aId];
+            document.getElementById('partner-grid').innerHTML = pls.filter(p => p.id !== window.aId).map(p =>
+                '<button class="sel-btn" onclick="window.selectPartner(' + p.id + ')" style="' + (current === p.id ? 'border-color:var(--p);background:#e8f5e9;' : '') + '">' + p.name + '</button>'
+            ).join('');
+        }
+
+        window.showPartnerSelect = function() {
+            if (window.aId === null) return;
+            renderPartnerGrid();
+            document.querySelectorAll('.sc, .tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('s-partner').classList.add('active');
+        };
+
+        window.selectPartner = function(partnerId) {
+            window.pairs[window.aId] = partnerId;
+            if (db) db.ref('rooms/' + window.roomId + '/pairs/' + window.aId).set(partnerId);
+            document.getElementById('bottom-tabs').style.display = 'flex';
+            window.sw('in');
+        };
+
+        window.skipPartner = function() {
+            if (window.aId === null) return;
+            window.pairs[window.aId] = null;
+            if (db) db.ref('rooms/' + window.roomId + '/pairs/' + window.aId).set(null);
+            document.getElementById('bottom-tabs').style.display = 'flex';
+            window.sw('in');
+        };
+
+        function updatePartnerLine() {
+            let el = document.getElementById('partnerLine');
+            if (!el) return;
+            let partnerId = window.pairs[window.aId];
+            if (partnerId) {
+                let partner = pls.find(p => p.id === partnerId);
+                el.innerText = partner ? '🤝 Playing 4BBB with ' + partner.name : '';
+            } else {
+                el.innerText = 'Playing solo — no 4BBB partner set';
+            }
+        }
+
         window.chRound = function(id) {
             if (id === window.roundId) return;
-
             let toRound = rounds.find(r => r.id === id);
             let toCourse = courses[toRound.courseId];
-
-            // Always confirm on round switch — every round keeps its own score
-            // sheet, even rounds that share the same physical course (e.g. the
-            // two Black Mountain days both use Course C).
             let ok = confirm('Switch to ' + toRound.label + ' (' + toCourse.name + ')?\n\nThis is a separate score sheet from your current round.');
             if (!ok) return;
-
             window.roundId = id;
             window.hNum = 1;
             renderRoundPicker();
@@ -430,13 +454,17 @@
             window.rBoard();
         };
 
+        window.chBbbFilter = function(id) {
+            window.bbbFilter = id;
+            renderBbbFilters();
+            window.rBBB();
+        };
+
         window.selectPlayer = function(id) {
             window.aId = id;
             let ap = pls.find(p => p.id === window.aId);
             if(ap) document.getElementById('pNameDisplay').innerText = ap.name;
-
-            document.getElementById('bottom-tabs').style.display = 'flex';
-            window.sw('in');
+            window.showPartnerSelect();
         };
 
         window.showSetup = function() {
@@ -450,7 +478,6 @@
             return window.aId + "-" + window.roundId + "-" + window.hNum;
         }
 
-        // Shows the active player's daily handicap for the round/course being scored.
         function renderDailyHcp() {
             let dhEl = document.getElementById('dhDisplay');
             let subEl = document.getElementById('dhSub');
@@ -477,6 +504,7 @@
             document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si + strokeNote;
             document.getElementById('courseLabel').innerText = course.name;
             renderDailyHcp();
+            updatePartnerLine();
             ldScore();
         }
 
@@ -511,14 +539,12 @@
             }
         }
 
-        // Shared save logic used by both the +/- adjustment buttons and by
-        // tapping the score number directly (e.g. to accept the default par
-        // value without having to nudge it away and back).
         function commitScore() {
             if (window.aId === null) return;
             let targetKey = currentKey();
             window.scs[targetKey] = window.gross;
             window.rBoard();
+            window.rBBB();
             updateRecordedState(true);
             triggerToast("Score Saved!");
             if (db) {
@@ -527,7 +553,6 @@
         }
 
         window.chHole = function(d) {
-            // Warn (without blocking) if leaving a hole that has no saved score yet.
             if (window.aId !== null) {
                 let key = currentKey();
                 let saved = window.scs[key];
@@ -546,8 +571,6 @@
             commitScore();
         };
 
-        // Tapping the score number itself records the currently displayed
-        // value (e.g. the default par) without needing to nudge +/- first.
         window.saveScore = function() {
             if (window.aId === null) return;
             commitScore();
@@ -560,19 +583,14 @@
             document.getElementById('t-' + tab).classList.add('active');
             if(tab === 'in') upHole();
             if(tab === 'bd') window.rBoard();
+            if(tab === '4bbb') window.rBBB();
         };
 
-        // Hidden admin reset: tap the room tag 5 times within 2s to trigger.
-        // Not visible anywhere in the UI on purpose — this wipes ALL scores
-        // for every player, in every round, for this room. Only meant to be
-        // used once testing is done and you want a clean sheet before the
-        // real trip starts.
         window.resetTapCount = 0;
         window.tapRoomTag = function() {
             window.resetTapCount++;
             clearTimeout(window.resetTapTimer);
             window.resetTapTimer = setTimeout(() => { window.resetTapCount = 0; }, 2000);
-
             if (window.resetTapCount >= 5) {
                 window.resetTapCount = 0;
                 clearTimeout(window.resetTapTimer);
@@ -589,7 +607,6 @@
                 'and before the real trip begins.'
             );
             if (!sure) return;
-
             let doubleSure = confirm(
                 'Are you absolutely sure? Type-check: this deletes ' +
                 'ALL data for room "' + window.roomId + '" right now.'
@@ -599,6 +616,7 @@
             window.scs = {};
             if (window.aId !== null) ldScore();
             window.rBoard();
+            window.rBBB();
             triggerToast("All scores reset!");
 
             if (db) {
@@ -606,39 +624,25 @@
             }
         };
 
-        // Share flow: try the native share sheet first (best experience where
-        // supported). If that's unavailable or fails for a reason other than
-        // the user cancelling, open our own share sheet with real options
-        // (WhatsApp / SMS / Email / Copy) rather than just silently copying
-        // the link with no way to actually send it.
         window.shareRoom = async function() {
             let url = window.location.href;
-
             if (navigator.share) {
                 try {
                     await navigator.share({ title: 'VN Golf 2025', url: url });
-                    return; // native share sheet handled it
+                    return;
                 } catch (e) {
-                    if (e && e.name === 'AbortError') return; // user cancelled, that's fine
-                    // otherwise fall through to our own share sheet
+                    if (e && e.name === 'AbortError') return;
                 }
             }
-
             window.openShareSheet(url);
         };
 
         window.openShareSheet = function(url) {
             document.getElementById('shareLinkInput').value = url;
-
-            // The link is put on its own line, separated from the message text,
-            // so mail/messaging apps reliably auto-detect and activate it
-            // (some clients, notably iOS Mail, can need multiple taps to open
-            // a link that's on the same line as other text).
             let msg = encodeURIComponent('Join our golf scoring game!\n\n' + url);
             document.getElementById('shareWhatsapp').href = 'https://wa.me/?text=' + msg;
             document.getElementById('shareSms').href = 'sms:?&body=' + msg;
             document.getElementById('shareEmail').href = 'mailto:?subject=' + encodeURIComponent('VN Golf 2025 - Join the game') + '&body=' + msg;
-
             document.getElementById('shareOverlay').classList.add('show');
         };
 
@@ -649,19 +653,14 @@
         window.copyShareLink = async function() {
             let url = document.getElementById('shareLinkInput').value;
             let btn = document.getElementById('shareCopyBtn');
-
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
                     await navigator.clipboard.writeText(url);
                     btn.innerText = 'Copied!';
                     setTimeout(() => { btn.innerText = 'Copy'; }, 1500);
                     return;
-                } catch (e) {
-                    // fall through to manual-select fallback
-                }
+                } catch (e) {}
             }
-
-            // Final fallback: select the text so the user can copy manually.
             let input = document.getElementById('shareLinkInput');
             input.removeAttribute('readonly');
             input.focus();
@@ -669,9 +668,6 @@
             input.setAttribute('readonly', true);
         };
 
-        // Computes thru/net/points for one player over a given list of round objects.
-        // The daily handicap is worked out separately for each round, from the
-        // slope/rating of the course that round is played on.
         function tallyPlayer(p, roundList) {
             let thru = 0, netDiff = 0, pts = 0;
             roundList.forEach(r => {
@@ -695,15 +691,12 @@
         window.rBoard = function() {
             let roundList = window.lbFilter === 'all' ? rounds : rounds.filter(r => r.id === window.lbFilter);
             let maxThru = roundList.length * 18;
-
             let lb = pls.map(p => {
                 let { thru, netDiff, pts } = tallyPlayer(p, roundList);
                 let isMe = (p.id === window.aId);
                 return { id: p.id, name: p.name, thru, netDiff, points: pts, isMe };
             });
-
             lb.sort((a, b) => b.points - a.points || a.netDiff - b.netDiff);
-
             document.getElementById('lbl').innerHTML = lb.map((p, idx) => {
                 let nt = p.netDiff === 0 ? 'E' : (p.netDiff > 0 ? '+' + p.netDiff : p.netDiff);
                 let rowClass = (p.isMe ? 'row my-row' : 'row') + ' tappable';
@@ -711,20 +704,74 @@
                 return '<div class="' + rowClass + '" onclick="window.showScorecard(' + p.id + ')"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + p.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (p.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + p.points + '</div></div>';
             }).join('');
         };
-        // ===== SCORECARD MODAL =====
-        // Tapping a player's row on the leaderboard opens a hole-by-hole
-        // scorecard for that player. Defaults to whichever round is currently
-        // active for score entry (or the first round with any scores), and
-        // lets you flip between rounds inside the modal.
+
+        // ===== 4BBB TEAM SCOREBOARD =====
+        function getTeams() {
+            let seen = {}, teams = [];
+            pls.forEach(p => {
+                let partnerId = window.pairs[p.id];
+                if (!partnerId) return;
+                let key = [p.id, partnerId].sort((a,b)=>a-b).join('-');
+                if (seen[key]) return;
+                seen[key] = true;
+                let partner = pls.find(x => x.id === partnerId);
+                if (!partner) return;
+                teams.push({ key, players: [p, partner] });
+            });
+            return teams;
+        }
+
+        function tallyTeam(team, roundList) {
+            let thru = 0, netDiff = 0, pts = 0;
+            roundList.forEach(r => {
+                let course = courses[r.courseId];
+                let dhs = team.players.map(p => dailyHcp(p, r.courseId));
+                for (let h = 1; h <= 18; h++) {
+                    let par = course.holes[h].par, si = course.holes[h].si;
+                    let best = null;
+                    team.players.forEach((p, i) => {
+                        let g = window.scs[p.id + '-' + r.id + '-' + h];
+                        if (g) {
+                            let net = g - strokesOnHole(dhs[i], si);
+                            let holePts = Math.max(0, par - net + 2);
+                            if (best === null || holePts > best.pts) best = { net, pts: holePts };
+                        }
+                    });
+                    if (best) { thru++; netDiff += (best.net - par); pts += best.pts; }
+                }
+            });
+            return { thru, netDiff, pts };
+        }
+
+        window.rBBB = function() {
+            let el = document.getElementById('bbbl');
+            if (!el) return;
+            let roundList = window.bbbFilter === 'all' ? rounds : rounds.filter(r => r.id === window.bbbFilter);
+            let maxThru = roundList.length * 18;
+            let teams = getTeams();
+            if (!teams.length) {
+                el.innerHTML = '<div class="sc-empty">No 4BBB teams yet. Pick a partner from "Switch Profile / Switch Partner" to join a team.</div>';
+                return;
+            }
+            let lb = teams.map(t => {
+                let { thru, netDiff, pts } = tallyTeam(t, roundList);
+                let isMine = t.players.some(p => p.id === window.aId);
+                return { name: t.players.map(p => p.name).join(' / '), thru, netDiff, pts, isMine };
+            });
+            lb.sort((a, b) => b.pts - a.pts || a.netDiff - b.netDiff);
+            el.innerHTML = lb.map((t, idx) => {
+                let nt = t.netDiff === 0 ? 'E' : (t.netDiff > 0 ? '+' + t.netDiff : t.netDiff);
+                let rowClass = t.isMine ? 'row my-row' : 'row';
+                let thruDisplay = roundList.length > 1 ? (t.thru + '/' + maxThru) : t.thru;
+                return '<div class="' + rowClass + '"><div style="width:10%; font-weight:bold;">' + (idx + 1) + '</div><div style="width:40%; font-weight:bold;">' + t.name + '</div><div style="width:15%; text-align:center; color:#666;">' + thruDisplay + '</div><div style="width:20%; text-align:center; font-weight:bold;">' + (t.thru === 0 ? '-' : nt) + '</div><div style="width:15%; text-align:right; font-weight:bold; color:var(--p);">' + t.pts + '</div></div>';
+            }).join('');
+        };
+
         window.scPlayerId = null;
         window.scRoundId = null;
 
         window.showScorecard = function(playerId) {
             window.scPlayerId = playerId;
-
-            // Pick a sensible starting round: current entry round if it has
-            // scores for this player, else the first round that does, else
-            // just the current entry round.
             let hasScores = (rid) => {
                 for (let h = 1; h <= 18; h++) {
                     if (window.scs[playerId + '-' + rid + '-' + h]) return true;
@@ -737,13 +784,10 @@
                 let withData = rounds.find(r => hasScores(r.id));
                 window.scRoundId = withData ? withData.id : window.roundId;
             }
-
             let p = pls.find(pl => pl.id === playerId);
             document.getElementById('scPlayerName').innerText = p.name + ' (GA Hcp: ' + p.handicap + ')';
-
             renderScRoundPicker();
             renderScTable();
-
             document.getElementById('scorecardOverlay').classList.add('show');
         };
 
@@ -768,43 +812,33 @@
             let round = rounds.find(r => r.id === window.scRoundId);
             let course = courses[round.courseId];
             let dh = dailyHcp(p, round.courseId);
-
             let dhInfo = '<div class="sc-dh">Daily Hcp <b>' + fmtDh(dh) + '</b> &middot; Slope ' + course.slope + ' &middot; SR ' + course.scratch + ' &middot; Par ' + coursePar(course) + '</div>';
-
             let rows = '';
             let totalPar = 0, totalGross = 0, totalNet = 0, totalPts = 0, played = 0;
-
             for (let h = 1; h <= 18; h++) {
                 let hole = course.holes[h];
                 let key = p.id + '-' + round.id + '-' + h;
                 let gross = window.scs[key];
                 totalPar += hole.par;
-
                 if (gross) {
                     played++;
                     let strokes = strokesOnHole(dh, hole.si);
                     let net = gross - strokes;
                     let pts = Math.max(0, hole.par - net + 2);
-                    totalGross += gross;
-                    totalNet += net;
-                    totalPts += pts;
-
+                    totalGross += gross; totalNet += net; totalPts += pts;
                     let cls = net < hole.par ? 'sc-score-under' : (net === hole.par ? 'sc-score-par' : 'sc-score-over');
                     rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>' + gross + '</td><td class="' + cls + '">' + net + '</td><td>' + pts + '</td></tr>';
                 } else {
                     rows += '<tr><td class="hole-col">' + h + '</td><td>' + hole.par + '</td><td>' + hole.si + '</td><td>-</td><td>-</td><td>-</td></tr>';
                 }
             }
-
             let wrap = document.getElementById('scTableWrap');
             if (played === 0) {
                 wrap.innerHTML = dhInfo + '<div class="sc-empty">No scores entered yet for ' + round.label + '.</div>';
                 return;
             }
-
             let netToPar = totalNet - totalPar;
             let netDisplay = netToPar === 0 ? 'E' : (netToPar > 0 ? '+' + netToPar : netToPar);
-
             wrap.innerHTML = dhInfo +
                 '<table class="sc-table">' +
                 '<thead><tr><th class="hole-col">Hole</th><th>Par</th><th>SI</th><th>Gross</th><th>Net</th><th>Pts</th></tr></thead>' +
