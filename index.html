@@ -56,6 +56,10 @@
         .round-btn { flex: 0 0 auto; background: white; border: 2px solid #ddd; padding: 8px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; color: #555; white-space: nowrap; }
         .round-btn.active { background: var(--p); border-color: var(--p); color: white; }
         .course-label { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .special-banner { display: none; text-align: center; padding: 10px 12px; border-radius: 10px; font-weight: bold; font-size: 0.95rem; margin: 0 0 15px; }
+        .special-banner.show { display: block; }
+        .sb-ld { background: #fff3e0; color: #e65100; border: 2px solid #ffb74d; }
+        .sb-ps { background: #e3f2fd; color: #01579b; border: 2px solid #64b5f6; }
 
         .dh-line { font-size: 0.85rem; color: #555; margin-top: 4px; }
         .dh-line b { color: var(--p); }
@@ -130,6 +134,7 @@
 
     <div id="s-in" class="sc">
         <div class="round-pick" id="roundPick"></div>
+        <div id="specialBanner" class="special-banner"></div>
 
         <div class="hnav">
             <button onclick="window.chHole(-1)">◀</button>
@@ -288,11 +293,14 @@
             }
         };
 
+        // longDriveHole / pinShotHole: set to a hole number (1-18) to nominate
+        // that hole for a long drive or pin shot (nearest-the-pin) competition
+        // that round. Leave as null if the round has no nominated hole.
         const rounds = [
-            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1' },
-            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3' },
-            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2' },
-            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3' }
+            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHole: null, pinShotHole: null },
+            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHole: null, pinShotHole: null },
+            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHole: null, pinShotHole: null },
+            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHole: null, pinShotHole: null }
         ];
 
         window.scs = {};
@@ -575,9 +583,25 @@
             document.getElementById('hd').innerText = "Hole " + window.hNum;
             document.getElementById('hdt').innerText = "Par " + c.par + " | SI " + c.si + strokeNote;
             document.getElementById('courseLabel').innerText = course.name;
+            renderSpecialBanner(round);
             renderDailyHcp();
             updatePartnerLine();
             ldScore();
+        }
+
+        function renderSpecialBanner(round) {
+            let el = document.getElementById('specialBanner');
+            if (!el) return;
+            if (round.longDriveHole === window.hNum) {
+                el.className = 'special-banner sb-ld show';
+                el.innerText = '🚀 LONG DRIVE HOLE — muscle up!';
+            } else if (round.pinShotHole === window.hNum) {
+                el.className = 'special-banner sb-ps show';
+                el.innerText = '🎯 PIN SHOT HOLE — keep your head down';
+            } else {
+                el.className = 'special-banner';
+                el.innerText = '';
+            }
         }
 
         function ldScore(){
