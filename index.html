@@ -293,14 +293,15 @@
             }
         };
 
-        // longDriveHole / pinShotHole: set to a hole number (1-18) to nominate
-        // that hole for a long drive or pin shot (nearest-the-pin) competition
-        // that round. Leave as null if the round has no nominated hole.
+        // longDriveHoles / pinShotHoles: arrays of hole numbers (1-18) to nominate
+        // for a long drive or pin shot (nearest-the-pin) competition that round.
+        // Leave as an empty array [] if the round has no nominated holes, or
+        // list as many as you like, e.g. longDriveHoles: [4, 13].
         const rounds = [
-            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHole: null, pinShotHole: null },
-            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHole: null, pinShotHole: null },
-            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHole: null, pinShotHole: null },
-            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHole: null, pinShotHole: null }
+            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHoles: [], pinShotHoles: [] },
+            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] },
+            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHoles: [], pinShotHoles: [] },
+            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] }
         ];
 
         window.scs = {};
@@ -592,10 +593,15 @@
         function renderSpecialBanner(round) {
             let el = document.getElementById('specialBanner');
             if (!el) return;
-            if (round.longDriveHole === window.hNum) {
+            let isLD = (round.longDriveHoles || []).includes(window.hNum);
+            let isPS = (round.pinShotHoles || []).includes(window.hNum);
+            if (isLD && isPS) {
+                el.className = 'special-banner sb-ld show';
+                el.innerHTML = '🚀 LONG DRIVE HOLE — muscle up!<br>🎯 PIN SHOT HOLE — keep your head down';
+            } else if (isLD) {
                 el.className = 'special-banner sb-ld show';
                 el.innerText = '🚀 LONG DRIVE HOLE — muscle up!';
-            } else if (round.pinShotHole === window.hNum) {
+            } else if (isPS) {
                 el.className = 'special-banner sb-ps show';
                 el.innerText = '🎯 PIN SHOT HOLE — keep your head down';
             } else {
