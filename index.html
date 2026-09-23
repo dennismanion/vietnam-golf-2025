@@ -38,6 +38,9 @@
         .row { display: flex; background: white; padding: 12px 10px; border-bottom: 1px solid #eee; align-items: center; font-size: 0.9rem; }
         .sbtn { background: #0288d1; color: white; width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 1rem; }
         .room-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px; }
+        .conn-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; margin-top: 5px; margin-left: 6px; font-weight: bold; }
+        .conn-on { background: rgba(255,255,255,0.15); color: #c8e6c9; }
+        .conn-off { background: #fbc02d; color: #333; }
         .toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.85); color: white; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: top 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .toast.show { top: 20px; opacity: 1; }
 
@@ -105,6 +108,7 @@
     <div class="h">
         <h1 id="ht">⛳ VN Golf Legends</h1>
         <div id="roomDisplay" class="room-tag" onclick="window.tapRoomTag()" style="user-select:none; cursor:pointer;">Room: Loading...</div>
+        <div id="connBadge" class="conn-badge conn-on">🟢 Synced</div>
     </div>
 
     <div id="s-setup" class="sc active">
@@ -329,6 +333,58 @@
 
         function fmtDh(n) { return n < 0 ? '+' + Math.abs(n) : String(n); }
 
+        // ===== OFFLINE BACKUP (localStorage) =====
+        // Every score is mirrored to localStorage the instant it's entered, so
+        // if the phone loses reception AND the app/tab gets closed or killed
+        // before reconnecting, nothing recorded is lost. On load, and again
+        // whenever Firebase reconnects, we compare local vs remote and push up
+        // anything local that never made it to the server.
+        function lsKey() { return 'vnGolfScores_' + window.roomId; }
+
+        function saveLocal() {
+            try { localStorage.setItem(lsKey(), JSON.stringify(window.scs)); } catch (e) {}
+        }
+
+        function loadLocal() {
+            try {
+                let raw = localStorage.getItem(lsKey());
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) { return {}; }
+        }
+
+        function setConnBadge(state) {
+            let el = document.getElementById('connBadge');
+            if (!el) return;
+            if (state === 'offline') {
+                el.className = 'conn-badge conn-off';
+                el.innerText = '🔴 Offline — saving locally';
+            } else if (state === 'syncing') {
+                el.className = 'conn-badge conn-off';
+                el.innerText = '🟡 Syncing...';
+            } else {
+                el.className = 'conn-badge conn-on';
+                el.innerText = '🟢 Synced';
+            }
+        }
+
+        // Push any locally-held scores that the server doesn't have yet
+        // (entered while offline). Returns the count pushed.
+        function pushMissingToServer(remote) {
+            if (!db) return 0;
+            let toPush = {};
+            Object.keys(window.scs).forEach(k => {
+                let v = window.scs[k];
+                if (v !== undefined && v !== null && (!(k in remote) || remote[k] === null)) {
+                    toPush[k] = v;
+                }
+            });
+            let n = Object.keys(toPush).length;
+            if (n > 0) {
+                db.ref('rooms/' + window.roomId + '/scores').update(toPush);
+            }
+            return n;
+        }
+
         function init() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -344,6 +400,11 @@
 
             document.getElementById('roomDisplay').innerText = "Room: " + window.roomId;
 
+            // Load anything saved locally first, so the app works fully
+            // offline (including on a fresh, never-connected load) before
+            // Firebase has a chance to respond.
+            window.scs = loadLocal();
+
             renderSetupGrid();
             renderRoundPicker();
             renderLbFilters();
@@ -352,8 +413,19 @@
             window.rBBB();
 
             if (db) {
+                db.ref('.info/connected').on('value', (snap) => {
+                    setConnBadge(snap.val() === true ? 'online' : 'offline');
+                });
+
                 db.ref('rooms/' + window.roomId + '/scores').on('value', (snap) => {
-                    window.scs = snap.val() || {};
+                    let remote = snap.val() || {};
+                    let pushedCount = pushMissingToServer(remote);
+                    // Merge: remote is the source of truth for anything it has;
+                    // keep any local-only entries (just pushed above) until the
+                    // next snapshot confirms them.
+                    window.scs = Object.assign({}, window.scs, remote);
+                    saveLocal();
+                    if (pushedCount > 0) triggerToast("🔄 Synced " + pushedCount + " offline score" + (pushedCount > 1 ? 's' : ''));
                     if (window.aId !== null) ldScore();
                     window.rBoard();
                     window.rBBB();
@@ -543,11 +615,15 @@
             if (window.aId === null) return;
             let targetKey = currentKey();
             window.scs[targetKey] = window.gross;
+            saveLocal();
             window.rBoard();
             window.rBBB();
             updateRecordedState(true);
             triggerToast("Score Saved!");
             if (db) {
+                // Queued by the Firebase SDK even if offline right now; it will
+                // flush automatically on reconnect. The localStorage copy above
+                // is the backstop in case the app gets closed before that happens.
                 db.ref('rooms/' + window.roomId + '/scores/' + targetKey).set(window.gross);
             }
         }
