@@ -104,6 +104,8 @@
         #sd { cursor: pointer; border-radius: 12px; transition: background 0.15s ease; }
         #sd:active { background: #e8f5e9; }
         #sd.recorded { color: var(--p); }
+        #sd.flash { animation: sdflash 0.6s ease; }
+        @keyframes sdflash { 0%, 100% { background: transparent; } 25%, 75% { background: #ffcdd2; } }
     </style>
 </head>
 <body>
@@ -298,7 +300,7 @@
         // Leave as an empty array [] if the round has no nominated holes, or
         // list as many as you like, e.g. longDriveHoles: [4, 13].
         const rounds = [
-            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHoles: [1,2], pinShotHoles: [3,4] },
+            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHoles: [], pinShotHoles: [] },
             { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] },
             { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHoles: [], pinShotHoles: [] },
             { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] }
@@ -659,16 +661,27 @@
         }
 
         window.chHole = function(d) {
-            if (window.aId !== null) {
+            if (window.aId !== null && d > 0) {
                 let key = currentKey();
                 let saved = window.scs[key];
                 if (saved === undefined || saved === null) {
-                    triggerToast("⚠️ Hole " + window.hNum + " not recorded!");
+                    triggerToast("⚠️ Record Hole " + window.hNum + " before moving on!");
+                    flashScoreEntry();
+                    return; // stay on this hole until a score is saved
                 }
             }
             window.hNum = Math.max(1, Math.min(18, window.hNum + d));
             upHole();
         };
+
+        // Quick visual nudge (on top of the toast) when someone tries to skip
+        // ahead without recording — makes it obvious where to tap.
+        function flashScoreEntry() {
+            let sd = document.getElementById('sd');
+            if (!sd) return;
+            sd.classList.add('flash');
+            setTimeout(() => sd.classList.remove('flash'), 600);
+        }
 
         window.adj = function(v) {
             if (window.aId === null) return;
