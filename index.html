@@ -283,7 +283,7 @@
                 }
             },
             c3: {
-                name: 'Course C', slope: 126, scratch: 70.4,
+                name: 'Course C', slope: 127, scratch: 71.2,
                 holes: {
                     1: { par: 4, si: 7 },  2: { par: 5, si: 13 }, 3: { par: 3, si: 15 },
                     4: { par: 4, si: 11 }, 5: { par: 4, si: 1 },  6: { par: 5, si: 9 },
@@ -300,10 +300,10 @@
         // Leave as an empty array [] if the round has no nominated holes, or
         // list as many as you like, e.g. longDriveHoles: [4, 13].
         const rounds = [
-            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHoles: [], pinShotHoles: [] },
-            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] },
-            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHoles: [], pinShotHoles: [] },
-            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHoles: [], pinShotHoles: [] }
+            { id: 'r1', label: 'Springfield CC E/N', courseId: 'c1', longDriveHoles: [13], pinShotHoles: [4,14] },
+            { id: 'r2', label: 'Black Mntn E/N Day 1', courseId: 'c3', longDriveHoles: [18], pinShotHoles: [3,11] },
+            { id: 'r3', label: 'Pineapple Valley', courseId: 'c2', longDriveHoles: [12], pinShotHoles: [4,15] },
+            { id: 'r4', label: 'Black Mntn E/N Day 2', courseId: 'c3', longDriveHoles: [13], pinShotHoles: [8,14] }
         ];
 
         window.scs = {};
